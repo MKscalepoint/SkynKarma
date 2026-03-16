@@ -32,7 +32,28 @@ const FAQS = [
     a: "Great question — and honestly, you could. But here's the difference: ChatGPT is a blank slate every single time. It doesn't know your skin type, your concerns, your sensitivities, or what products you're already using. Skyn Karma builds a profile around you and carries that context into every conversation. It also has dedicated tools — like the ingredient decoder and compatibility checker — built specifically for skincare. Think of it as the difference between googling your symptoms and talking to a doctor who already knows your history."
   },
 ];
-
+function CookieBanner() {
+  const [visible, setVisible] = useState(true);
+  if (!visible) return null;
+  return (
+    <div style={{
+      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 999,
+      background: '#0f172a', padding: '12px 24px',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      gap: 16, flexWrap: 'wrap',
+    }}>
+      <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
+        We use cookies to keep you logged in. No tracking, no ads.{' '}
+        <a href="#" style={{ color: ROSE, textDecoration: 'none' }}>Learn more</a>
+      </p>
+      <button onClick={() => setVisible(false)} style={{
+        background: ROSE, border: 'none', borderRadius: 8,
+        padding: '7px 18px', color: '#fff', fontSize: 13,
+        fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0,
+      }}>Got it</button>
+    </div>
+  );
+}
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
@@ -354,7 +375,7 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
           .tools-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
-
+      <CookieBanner />
       {/* Footer */}
       <div style={{ padding: '24px 40px', textAlign: 'center', fontSize: 12, color: '#94a3b8', borderTop: '1px solid #f1f5f9' }}>
         Skyn Karma provides general skincare guidance and is not a substitute for professional dermatological advice.<br /><br />
