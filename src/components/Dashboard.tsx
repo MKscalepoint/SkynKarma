@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import { UserProfile, RoutineProduct } from '@/types';
 import { generateId } from '@/lib/storage';
 
-const TEAL = '#b5737a';
-const TEAL_LIGHT = '#fdf2f3';
-const TEAL_MID = '#f2d0d3';
+const TEAL = '#0d9488';
+const TEAL_LIGHT = '#f0fdfa';
+const TEAL_MID = '#ccfbf1';
 
 interface DashboardProps {
   profile: UserProfile;
@@ -150,7 +150,17 @@ export default function Dashboard({
           <h1 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.4px' }}>
             {greeting} 👋
           </h1>
-          <p style={{ margin: 0, fontSize: 14, color: '#64748b' }}>What do you want to work on today?</p>
+          {profile.completed ? (
+            <p style={{ margin: 0, fontSize: 14, color: '#64748b' }}>What do you want to work on today?</p>
+          ) : (
+            <div style={{ marginTop: 10, background: TEAL_LIGHT, border: `1px solid ${TEAL_MID}`, borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 2 }}>Set up your skin profile</div>
+                <div style={{ fontSize: 13, color: '#64748b' }}>Takes 2 minutes — unlocks personalised advice</div>
+              </div>
+              <button onClick={onEditProfile} style={{ background: TEAL, border: 'none', borderRadius: 8, padding: '8px 16px', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>Start →</button>
+            </div>
+          )}
         </div>
 
         {/* Chat card */}
@@ -161,7 +171,7 @@ export default function Dashboard({
         }}>
           <div style={{
             position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-            background: `linear-gradient(90deg, ${TEAL}, #c9a0a6)`, borderRadius: '18px 18px 0 0',
+            background: `linear-gradient(90deg, ${TEAL}, #06b6d4)`, borderRadius: '18px 18px 0 0',
           }} />
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
             <div style={{
@@ -172,7 +182,9 @@ export default function Dashboard({
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginBottom: 3 }}>Ask your skin advisor</div>
               <div style={{ fontSize: 13, color: '#64748b', marginBottom: 14, lineHeight: 1.5 }}>
-                Personalised advice based on your {profile.skinType?.toLowerCase()} skin profile
+                {profile.completed
+                  ? `Personalised advice based on your ${profile.skinType?.toLowerCase()} skin profile`
+                  : 'Ask me anything — set up your profile for personalised advice'}
               </div>
               <div onClick={() => onOpenChat()} style={{
                 display: 'flex', alignItems: 'center', gap: 10,
@@ -342,24 +354,44 @@ export default function Dashboard({
           <IconUser size={13} color="#94a3b8" />
           <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#94a3b8' }}>My Profile</div>
         </div>
-        <div style={{
-          background: `linear-gradient(135deg, ${TEAL} 0%, #0a7a70 100%)`,
-          borderRadius: 16, padding: '18px', display: 'flex', alignItems: 'center', gap: 14,
-          boxShadow: '0 4px 16px rgba(13,148,136,0.2)',
-        }}>
-          <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <IconUser size={22} color="#fff" />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 3 }}>
-              {profile.skinType} skin · {profile.concerns?.slice(0, 2).join(', ')}
+        {profile.completed ? (
+          <div style={{
+            background: `linear-gradient(135deg, ${TEAL} 0%, #9a5a62 100%)`,
+            borderRadius: 16, padding: '18px', display: 'flex', alignItems: 'center', gap: 14,
+            boxShadow: '0 4px 16px rgba(181,115,122,0.2)',
+          }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <IconUser size={22} color="#fff" />
             </div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.4 }}>
-              {profile.experience} · {profile.age}{profile.sensitivities && profile.sensitivities !== 'None' ? ` · ${profile.sensitivities}` : ''}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 3 }}>
+                {profile.skinType} skin · {profile.concerns?.slice(0, 2).join(', ')}
+              </div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.4 }}>
+                {profile.experience} · {profile.age}{profile.sensitivities && profile.sensitivities !== 'None' ? ` · ${profile.sensitivities}` : ''}
+              </div>
             </div>
+            <button onClick={onEditProfile} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, padding: '7px 14px', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>Edit</button>
           </div>
-          <button onClick={onEditProfile} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, padding: '7px 14px', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>Edit</button>
-        </div>
+        ) : (
+          <div onClick={onEditProfile} style={{
+            background: '#fff', border: `1.5px dashed ${TEAL_MID}`, borderRadius: 16,
+            padding: '20px', display: 'flex', alignItems: 'center', gap: 14,
+            cursor: 'pointer',
+          }}
+            onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.borderColor = TEAL}
+            onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.borderColor = TEAL_MID}
+          >
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: TEAL_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <IconUser size={22} color={TEAL} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 2 }}>No profile yet</div>
+              <div style={{ fontSize: 13, color: '#64748b' }}>Set up your skin profile for tailored advice</div>
+            </div>
+            <div style={{ fontSize: 13, color: TEAL, fontWeight: 600, flexShrink: 0 }}>Set up →</div>
+          </div>
+        )}
 
       </div>
     </div>
