@@ -3,8 +3,9 @@
 import { useState, useRef } from 'react';
 import { UserProfile } from '@/types';
 
-const TEAL = '#b5737a';
-const TEAL_LIGHT = '#fdf2f3';
+const ROSE = '#b5737a';
+const ROSE_LIGHT = '#fdf2f3';
+const ROSE_MID = '#f2d0d3';
 
 interface IngredientDecoderProps {
   profile: UserProfile | null;
@@ -15,6 +16,34 @@ interface DecoderResult {
   productName: string;
   analysis: string;
 }
+
+const IconFlask = ({ size = 16, color = ROSE }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/>
+    <path d="M14 9.3a6.5 6.5 0 1 1-4 0"/>
+  </svg>
+);
+
+const IconCamera = ({ size = 20, color = ROSE }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+    <circle cx="12" cy="13" r="4"/>
+  </svg>
+);
+
+const IconClipboard = ({ size = 20, color = '#64748b' }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+  </svg>
+);
+
+const IconLightbulb = ({ size = 14, color = ROSE }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+    <path d="M9 18h6"/><path d="M10 22h4"/>
+  </svg>
+);
 
 export default function IngredientDecoder({ profile, onClose }: IngredientDecoderProps) {
   const [productName, setProductName] = useState('');
@@ -55,13 +84,13 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: photo } },
-            { type: 'text', text: `You are Skinsight, an expert skincare advisor. The user has uploaded a photo of a product ingredient list.\n\n${profileContext}\nProduct: ${productName || 'Unknown product'}\n\nFirst extract the ingredient list from the image, then provide a structured analysis:\n1. **Key active ingredients** — what they do\n2. **Ingredients to note** — issues for this skin type/sensitivities\n3. **Best for** — skin types and concerns\n4. **Overall verdict** — well-formulated?\n5. **Compatibility tip** — layering advice\n\nIf the image is unclear, say so and suggest the user try the paste text option. Bold key ingredient names.` }
+            { type: 'text', text: `You are Skyn Karma, an expert skincare advisor. The user has uploaded a photo of a product ingredient list.\n\n${profileContext}\nProduct: ${productName || 'Unknown product'}\n\nFirst extract the ingredient list from the image, then provide a structured analysis:\n1. **Key active ingredients** — what they do\n2. **Ingredients to note** — issues for this skin type/sensitivities\n3. **Best for** — skin types and concerns\n4. **Overall verdict** — well-formulated?\n5. **Compatibility tip** — layering advice\n\nIf the image is unclear, say so and suggest the user try the paste text option. Bold key ingredient names.` }
           ]
         }];
       } else {
         messages = [{
           role: 'user',
-          content: `You are Skinsight, an expert skincare advisor.\n\n${profileContext}\nProduct: ${productName || 'Unknown product'}\nIngredients: ${ingredients}\n\nProvide a structured analysis:\n1. **Key active ingredients** — what they do\n2. **Ingredients to note** — issues for this skin type/sensitivities\n3. **Best for** — skin types and concerns\n4. **Overall verdict** — well-formulated? Marketing hype vs real actives?\n5. **Compatibility tip** — layering advice\n\nBe honest, specific, practical. Bold key ingredient names.`
+          content: `You are Skyn Karma, an expert skincare advisor.\n\n${profileContext}\nProduct: ${productName || 'Unknown product'}\nIngredients: ${ingredients}\n\nProvide a structured analysis:\n1. **Key active ingredients** — what they do\n2. **Ingredients to note** — issues for this skin type/sensitivities\n3. **Best for** — skin types and concerns\n4. **Overall verdict** — well-formulated? Marketing hype vs real actives?\n5. **Compatibility tip** — layering advice\n\nBe honest, specific, practical. Bold key ingredient names.`
         }];
       }
 
@@ -102,7 +131,9 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
         <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: TEAL_LIGHT, border: `1px solid ${TEAL}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🔬</div>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IconFlask size={16} />
+              </div>
               <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#0f172a' }}>Ingredient Decoder</h2>
             </div>
             <p style={{ margin: 0, fontSize: 14, color: '#64748b' }}>Paste an ingredient list or photograph the product packaging</p>
@@ -125,8 +156,11 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                     fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
                     boxShadow: inputMode === mode ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
                     transition: 'all 0.15s',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}>
-                    {mode === 'text' ? '📋 Paste text' : '📷 Upload photo'}
+                    {mode === 'text'
+                      ? <><IconClipboard size={14} color={inputMode === mode ? '#0f172a' : '#94a3b8'} /> Paste text</>
+                      : <><IconCamera size={14} color={inputMode === mode ? '#0f172a' : '#94a3b8'} /> Upload photo</>}
                   </button>
                 ))}
               </div>
@@ -136,9 +170,11 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                 <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
                   Product name <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
                 </label>
-                <input value={productName} onChange={e => setProductName(e.target.value)} placeholder="e.g. COSRX Advanced Snail 96 Mucin Power Essence"
+                <input value={productName} onChange={e => setProductName(e.target.value)}
+                  placeholder="e.g. COSRX Advanced Snail 96 Mucin Power Essence"
                   style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
-                  onFocus={e => e.target.style.borderColor = TEAL} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                  onFocus={e => e.target.style.borderColor = ROSE}
+                  onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
 
               {/* Text mode */}
@@ -151,10 +187,12 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                     <textarea value={ingredients} onChange={e => setIngredients(e.target.value)}
                       placeholder="Paste the full ingredient list here — copy from the product packaging, website, or an app like INCI Beauty or CosDNA..."
                       rows={6} style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
-                      onFocus={e => e.target.style.borderColor = TEAL} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                      onFocus={e => e.target.style.borderColor = ROSE}
+                      onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                   </div>
-                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>
-                    💡 <strong>Tip:</strong> Find ingredient lists on brand websites, product packaging, or apps like INCI Beauty, CosDNA, or Think Dirty.
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <IconLightbulb size={14} />
+                    <span><strong>Tip:</strong> Find ingredient lists on brand websites, product packaging, or apps like INCI Beauty, CosDNA, or Think Dirty.</span>
                   </div>
                 </>
               )}
@@ -171,33 +209,34 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                       width: '100%', padding: '32px 20px', border: '2px dashed #e2e8f0', borderRadius: 12,
                       background: '#fafafa', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, fontFamily: 'inherit',
                     }}
-                      onMouseEnter={e => { (e.currentTarget).style.borderColor = TEAL; (e.currentTarget).style.background = TEAL_LIGHT; }}
+                      onMouseEnter={e => { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.background = ROSE_LIGHT; }}
                       onMouseLeave={e => { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.background = '#fafafa'; }}
                     >
-                      <span style={{ fontSize: 36 }}>📷</span>
+                      <IconCamera size={36} color={ROSE} />
                       <span style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}>Take a photo or upload from library</span>
                       <span style={{ fontSize: 13, color: '#94a3b8' }}>Point your camera at the ingredient list on the packaging</span>
                     </button>
                   ) : (
-                    <div style={{ border: `1.5px solid ${TEAL}44`, borderRadius: 12, padding: '14px 16px', background: TEAL_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <div style={{ border: `1.5px solid ${ROSE}44`, borderRadius: 12, padding: '14px 16px', background: ROSE_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontSize: 20, color: TEAL }}>✓</span>
+                        <span style={{ fontSize: 16, color: ROSE }}>✓</span>
                         <div>
                           <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>Photo ready</div>
                           <div style={{ fontSize: 12, color: '#64748b' }}>{photoName}</div>
                         </div>
                       </div>
-                      <button onClick={() => { setPhoto(null); setPhotoName(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: TEAL, fontFamily: 'inherit', fontWeight: 600 }}>Change</button>
+                      <button onClick={() => { setPhoto(null); setPhotoName(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: ROSE, fontFamily: 'inherit', fontWeight: 600 }}>Change</button>
                     </div>
                   )}
-                  <p style={{ fontSize: 12, color: '#94a3b8', margin: '8px 0 0' }}>
-                    💡 Make sure the text is well-lit and in focus. If results are poor, try pasting the text instead.
+                  <p style={{ fontSize: 12, color: '#94a3b8', margin: '8px 0 0', display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                    <IconLightbulb size={12} color="#94a3b8" />
+                    Make sure the text is well-lit and in focus. If results are poor, try pasting the text instead.
                   </p>
                 </div>
               )}
 
               <button onClick={handleDecode} disabled={!canSubmit || loading} style={{
-                padding: '13px', background: canSubmit && !loading ? TEAL : '#e2e8f0',
+                padding: '13px', background: canSubmit && !loading ? ROSE : '#e2e8f0',
                 color: canSubmit && !loading ? '#fff' : '#94a3b8',
                 border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600,
                 cursor: canSubmit && !loading ? 'pointer' : 'default', fontFamily: 'inherit', transition: 'all 0.15s ease',
@@ -209,7 +248,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                 <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#0f172a' }}>{result.productName}</h3>
-                <button onClick={resetForm} style={{ padding: '6px 12px', background: TEAL_LIGHT, border: `1px solid ${TEAL}33`, borderRadius: 8, fontSize: 13, color: TEAL, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>Decode another</button>
+                <button onClick={resetForm} style={{ padding: '6px 12px', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 8, fontSize: 13, color: ROSE, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>Decode another</button>
               </div>
               <div style={{ fontSize: 15, lineHeight: 1.7, color: '#1e293b', listStylePosition: 'inside' }}>
                 {formatAnalysis(result.analysis)}
