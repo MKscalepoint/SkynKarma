@@ -37,14 +37,11 @@ function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div style={{ borderBottom: '1px solid #f1f5f9', overflow: 'hidden' }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{
-          width: '100%', padding: '20px 0', background: 'transparent', border: 'none',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          cursor: 'pointer', fontFamily: 'inherit', gap: 16, textAlign: 'left',
-        }}
-      >
+      <button onClick={() => setOpen(o => !o)} style={{
+        width: '100%', padding: '20px 0', background: 'transparent', border: 'none',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        cursor: 'pointer', fontFamily: 'inherit', gap: 16, textAlign: 'left',
+      }}>
         <span style={{ fontSize: 16, fontWeight: 600, color: '#0f172a', lineHeight: 1.4 }}>{q}</span>
         <span style={{
           width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
@@ -55,9 +52,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
         }}>+</span>
       </button>
       {open && (
-        <div style={{ fontSize: 15, color: '#475569', lineHeight: 1.75, paddingBottom: 20, paddingRight: 44 }}>
-          {a}
-        </div>
+        <div style={{ fontSize: 15, color: '#475569', lineHeight: 1.75, paddingBottom: 20, paddingRight: 44 }}>{a}</div>
       )}
     </div>
   );
@@ -107,17 +102,13 @@ interface LandingProps {
 
 export default function Landing({ onStart, hasProfile, onResume }: LandingProps) {
   return (
-    <div style={{
-      minHeight: '100vh', background: '#ffffff',
-      fontFamily: "'DM Sans', system-ui, sans-serif", overflowY: 'auto',
-    }}>
+    <div style={{ minHeight: '100vh', background: '#ffffff', fontFamily: "'DM Sans', system-ui, sans-serif", overflowY: 'auto' }}>
 
       {/* Nav */}
       <nav style={{
         padding: '0 40px', height: 64,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '1px solid #f1f5f9',
-        position: 'sticky', top: 0, background: '#ffffff', zIndex: 10,
+        borderBottom: '1px solid #f1f5f9', position: 'sticky', top: 0, background: '#ffffff', zIndex: 10,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
@@ -129,10 +120,9 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
         </div>
         {hasProfile && (
           <button onClick={onResume} style={{
-            padding: '8px 16px', background: ROSE, color: '#fff',
-            border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600,
-            cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
-            maxWidth: '55vw', overflow: 'hidden', textOverflow: 'ellipsis',
+            padding: '8px 16px', background: ROSE, color: '#fff', border: 'none', borderRadius: 8,
+            fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            whiteSpace: 'nowrap', maxWidth: '55vw', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
             <span className="hide-mobile-landing">Continue my consultation →</span>
             <span className="show-mobile-landing">Continue →</span>
@@ -146,24 +136,20 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
           display: 'inline-block', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`,
           borderRadius: 20, padding: '6px 16px', fontSize: 13, color: ROSE,
           fontWeight: 600, marginBottom: 28, letterSpacing: '0.3px',
-        }}>
-          AI-powered skincare intelligence
-        </div>
-        <h1 style={{
-          fontSize: 52, fontWeight: 800, color: '#0f172a',
-          margin: '0 0 20px', lineHeight: 1.15, letterSpacing: '-1.5px',
-        }}>
-          Your skin, finally<br />
-          <span style={{ color: ROSE }}>understood.</span>
+        }}>AI-powered skincare intelligence</div>
+
+        <h1 style={{ fontSize: 52, fontWeight: 800, color: '#0f172a', margin: '0 0 20px', lineHeight: 1.15, letterSpacing: '-1.5px' }}>
+          Your skin, finally<br /><span style={{ color: ROSE }}>understood.</span>
         </h1>
+
         <p style={{ fontSize: 19, color: '#64748b', lineHeight: 1.7, margin: '0 auto 40px', maxWidth: 560 }}>
           Skyn Karma helps you build the right routine, understand your ingredients, and make confident choices — personalised to your skin type and concerns.
         </p>
+
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button onClick={onStart} style={{
-            padding: '14px 32px', background: ROSE, color: '#fff',
-            border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700,
-            cursor: 'pointer', fontFamily: 'inherit',
+            padding: '14px 32px', background: ROSE, color: '#fff', border: 'none', borderRadius: 10,
+            fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
             boxShadow: '0 4px 20px rgba(181,115,122,0.35)',
           }}>
             {hasProfile ? 'Start new consultation' : 'Begin my skin profile →'}
@@ -173,23 +159,15 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
               padding: '14px 32px', background: '#ffffff', color: '#0f172a',
               border: '1.5px solid #e2e8f0', borderRadius: 10,
               fontSize: 16, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-            }}>
-              Resume consultation
-            </button>
+            }}>Resume consultation</button>
           )}
         </div>
       </div>
 
       {/* How it works */}
-      <div style={{
-        background: '#fafafa', borderTop: '1px solid #f1f5f9',
-        borderBottom: '1px solid #f1f5f9', padding: '64px 40px',
-      }}>
+      <div style={{ background: '#fafafa', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9', padding: '64px 40px' }}>
         <div style={{ maxWidth: 860, margin: '0 auto' }}>
-          <h2 style={{
-            textAlign: 'center', fontSize: 30, fontWeight: 700,
-            color: '#0f172a', margin: '0 0 48px', letterSpacing: '-0.5px',
-          }}>
+          <h2 style={{ textAlign: 'center', fontSize: 30, fontWeight: 700, color: '#0f172a', margin: '0 0 48px', letterSpacing: '-0.5px' }}>
             How Skyn Karma works
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24 }}>
@@ -208,8 +186,8 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
         </div>
       </div>
 
-      {/* Tools */}
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '64px 40px' }}>
+      {/* Tools — 4 columns */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '64px 40px' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <h2 style={{ fontSize: 30, fontWeight: 700, color: '#0f172a', margin: '0 0 12px', letterSpacing: '-0.5px' }}>
             Powerful tools included
@@ -218,38 +196,38 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
             Features usually locked behind a paywall — free while we&apos;re in early access.
           </p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
           {[
-            { icon: <IconFlask />, title: 'Ingredient Decoder', desc: 'Paste any INCI ingredient list and get a plain-English breakdown — what each ingredient does, whether anything is irritating, and red flags to watch out for.' },
-            { icon: <IconShieldCheck />, title: 'Check Products', desc: 'Add multiple products and get a full compatibility report — conflicts highlighted by severity, correct layering order, and which products belong in AM vs PM.' },
+            { icon: <IconFlask />, title: 'Ingredient Decoder', desc: 'Paste or photograph any ingredient list and get a plain-English breakdown — what each ingredient does, whether anything is irritating, and red flags to watch out for.' },
+            { icon: <IconShieldCheck />, title: 'Check Products', desc: 'Add multiple products by name or photo and get a full compatibility report — conflicts highlighted by severity, correct layering order, and AM vs PM split.' },
             { icon: <IconList />, title: 'My Routine Builder', desc: 'Build and save your personalised AM and PM routine as you go. Every product stored, ordered, and ready to reference whenever you need it.' },
-            { icon: <IconWarning />, title: 'Reality Check', desc: 'Seen it on TikTok or Instagram? Paste a product claim and find out if it\'s backed by science or just clever marketing.' },
+            { icon: <IconWarning />, title: 'Reality Check', desc: "Seen it on TikTok or Instagram? Paste a product claim or upload a screenshot and find out if it's backed by science or just clever marketing." },
           ].map(({ icon, title, desc }) => (
             <div key={title} style={{
               background: '#ffffff', border: '1px solid #e2e8f0',
-              borderRadius: 16, padding: '28px 24px', position: 'relative', overflow: 'hidden',
+              borderRadius: 16, padding: '24px 20px', position: 'relative', overflow: 'hidden',
             }}>
               <div style={{
-                position: 'absolute', top: 16, right: 16,
+                position: 'absolute', top: 14, right: 14,
                 background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`,
-                borderRadius: 20, padding: '3px 10px',
-                fontSize: 11, fontWeight: 600, color: ROSE, letterSpacing: '0.2px',
-              }}>Premium feature — free now</div>
+                borderRadius: 20, padding: '3px 9px',
+                fontSize: 10, fontWeight: 600, color: ROSE,
+              }}>Free now</div>
               <div style={{ marginBottom: 14 }}>{icon}</div>
-              <div style={{ fontSize: 17, fontWeight: 700, color: '#0f172a', marginBottom: 10 }}>{title}</div>
-              <div style={{ fontSize: 14, color: '#64748b', lineHeight: 1.65 }}>{desc}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>{title}</div>
+              <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>{desc}</div>
             </div>
           ))}
         </div>
-      </div>
 
-      {/* Roadmap strip */}
-      <div style={{
-        background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`,
-        borderRadius: 12, padding: '14px 24px', textAlign: 'center',
-        fontSize: 14, color: ROSE, maxWidth: 860, margin: '-24px auto 64px',
-      }}>
-        <strong>On the roadmap:</strong> skin journey tracking, monthly insight recaps, conversation memory and more — Skyn Karma gets smarter the longer you use it.
+        {/* Roadmap strip — sits below tools */}
+        <div style={{
+          background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`,
+          borderRadius: 12, padding: '14px 24px', textAlign: 'center',
+          fontSize: 14, color: ROSE, marginTop: 24,
+        }}>
+          <strong>On the roadmap:</strong> skin journey tracking, monthly insight recaps, conversation memory and more — Skyn Karma gets smarter the longer you use it.
+        </div>
       </div>
 
       {/* What you can ask */}
@@ -299,7 +277,7 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
         </div>
       </div>
 
-      {/* Journal / Blog coming soon */}
+      {/* Journal coming soon */}
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '64px 40px' }}>
         <div style={{
           background: '#fff', border: '1px solid #e2e8f0',
@@ -364,6 +342,12 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
         }
         @media (min-width: 481px) {
           .show-mobile-landing { display: none !important; }
+        }
+        @media (max-width: 768px) {
+          .tools-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 480px) {
+          .tools-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
