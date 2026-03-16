@@ -152,7 +152,7 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
             fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
             boxShadow: '0 4px 20px rgba(181,115,122,0.35)',
           }}>
-            {hasProfile ? 'Start new consultation' : 'Begin my skin profile →'}
+            {hasProfile ? 'Start new consultation' : 'Get started →'}
           </button>
           {hasProfile && (
             <button onClick={onResume} style={{
@@ -331,7 +331,7 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
           border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700,
           cursor: 'pointer', fontFamily: 'inherit',
         }}>
-          {hasProfile ? 'Start new consultation' : 'Begin my skin profile →'}
+          {hasProfile ? 'Start new consultation' : 'Get started →'}
         </button>
       </div>
 
