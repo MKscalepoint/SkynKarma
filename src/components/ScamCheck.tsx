@@ -3,9 +3,9 @@
 import { useState, useRef } from 'react';
 import { UserProfile } from '@/types';
 
-const TEAL = '#b5737a';
-const TEAL_LIGHT = '#fdf2f3';
-const TEAL_MID = '#f2d0d3';
+const ROSE = '#b5737a';
+const ROSE_LIGHT = '#fdf2f3';
+const ROSE_MID = '#f2d0d3';
 
 interface ScamCheckProps {
   profile: UserProfile | null;
@@ -13,7 +13,7 @@ interface ScamCheckProps {
 }
 
 interface Verdict {
-  score: number; // 0-100 legitimacy score
+  score: number;
   verdict: 'legit' | 'overpriced' | 'misleading' | 'scam';
   summary: string;
   claimsVsReality: string;
@@ -25,11 +25,38 @@ interface Verdict {
 }
 
 const VERDICT_CONFIG = {
-  legit: { label: 'Looks Legit', color: '#10b981', bg: '#f0fdf4', border: '#bbf7d0', emoji: '✅' },
-  overpriced: { label: 'Overpriced', color: '#f59e0b', bg: '#fffbeb', border: '#fde68a', emoji: '💸' },
-  misleading: { label: 'Misleading Claims', color: '#f97316', bg: '#fff7ed', border: '#fed7aa', emoji: '⚠️' },
-  scam: { label: 'Likely a Scam', color: '#ef4444', bg: '#fef2f2', border: '#fecaca', emoji: '🚨' },
+  legit: { label: 'Looks Legit', color: '#10b981', bg: '#f0fdf4', border: '#bbf7d0', icon: '✓' },
+  overpriced: { label: 'Overpriced', color: '#f59e0b', bg: '#fffbeb', border: '#fde68a', icon: '£' },
+  misleading: { label: 'Misleading Claims', color: '#f97316', bg: '#fff7ed', border: '#fed7aa', icon: '!' },
+  scam: { label: 'Likely a Scam', color: '#ef4444', bg: '#fef2f2', border: '#fecaca', icon: '✕' },
 };
+
+const IconWarning = ({ size = 16, color = ROSE }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+);
+
+const IconCamera = ({ size = 20, color = ROSE }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+    <circle cx="12" cy="13" r="4"/>
+  </svg>
+);
+
+const IconSearch = ({ size = 20, color = '#64748b' }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  </svg>
+);
+
+const IconLightbulb = ({ size = 14, color = '#64748b' }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+    <path d="M9 18h6"/><path d="M10 22h4"/>
+  </svg>
+);
 
 export default function ScamCheck({ profile, onClose }: ScamCheckProps) {
   const [productName, setProductName] = useState('');
@@ -61,7 +88,7 @@ export default function ScamCheck({ profile, onClose }: ScamCheckProps) {
     setVerdict(null);
     setError('');
 
-    const prompt = `You are Skinsight's product authenticity expert. A user wants to know if a skincare product is legitimate or potentially a scam/misleading.
+    const prompt = `You are Skyn Karma's product authenticity expert. A user wants to know if a skincare product is legitimate or potentially a scam/misleading.
 
 Product name: ${productName || 'Unknown (see photo)'}
 Brand claims / ad copy: ${brandClaim || 'Not provided'}
@@ -86,7 +113,6 @@ Be honest and direct. Do not give benefit of the doubt to vague claims. If ingre
 
     try {
       let messages;
-
       if (inputMode === 'photo' && photo) {
         messages = [{
           role: 'user',
@@ -104,7 +130,6 @@ Be honest and direct. Do not give benefit of the doubt to vague claims. If ingre
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages, profile }),
       });
-
       const data = await res.json();
       const text = data.content?.find((b: { type: string }) => b.type === 'text')?.text || '';
       const clean = text.replace(/```json|```/g, '').trim();
@@ -118,53 +143,29 @@ Be honest and direct. Do not give benefit of the doubt to vague claims. If ingre
   };
 
   const reset = () => {
-    setVerdict(null);
-    setProductName('');
-    setBrandClaim('');
-    setIngredients('');
-    setPhoto(null);
-    setPhotoName('');
-    setError('');
+    setVerdict(null); setProductName(''); setBrandClaim('');
+    setIngredients(''); setPhoto(null); setPhotoName(''); setError('');
   };
 
   const canSubmit = productName.trim() || photo;
   const vc = verdict ? VERDICT_CONFIG[verdict.verdict] : null;
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 100, padding: 24, fontFamily: "'DM Sans', system-ui, sans-serif",
-    }}>
-      <div style={{
-        background: '#fff', borderRadius: 20, width: '100%', maxWidth: 640,
-        maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-      }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+      <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 640, maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
 
         {/* Header */}
-        <div style={{
-          padding: '24px 28px 20px', borderBottom: '1px solid #f1f5f9',
-          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0,
-        }}>
+        <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: 8, background: TEAL_LIGHT,
-                border: `1px solid ${TEAL_MID}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
-              }}>🕵️</div>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IconWarning size={16} />
+              </div>
               <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#0f172a' }}>Reality Check</h2>
             </div>
-            <p style={{ margin: 0, fontSize: 14, color: '#64748b' }}>
-              Is that Instagram skincare product actually worth it?
-            </p>
+            <p style={{ margin: 0, fontSize: 14, color: '#64748b' }}>Is that TikTok or Instagram product actually worth it?</p>
           </div>
-          <button onClick={onClose} style={{
-            background: '#f1f5f9', border: 'none', borderRadius: 8,
-            width: 32, height: 32, cursor: 'pointer', fontSize: 18, color: '#64748b',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          }}>×</button>
+          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 18, color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
@@ -182,8 +183,9 @@ Be honest and direct. Do not give benefit of the doubt to vague claims. If ingre
                     fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
                     boxShadow: inputMode === mode ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
                     transition: 'all 0.15s',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}>
-                    {mode === 'text' ? '🔍 Enter product details' : '📷 Photo the ad or product'}
+                    {mode === 'text' ? <><IconSearch size={14} color={inputMode === mode ? '#0f172a' : '#94a3b8'} /> Enter product details</> : <><IconCamera size={14} color={inputMode === mode ? '#0f172a' : '#94a3b8'} /> Photo the ad or product</>}
                   </button>
                 ))}
               </div>
@@ -197,41 +199,38 @@ Be honest and direct. Do not give benefit of the doubt to vague claims. If ingre
                 <input value={productName} onChange={e => setProductName(e.target.value)}
                   placeholder="e.g. GlowLab Pro Stem Cell Regenerating Serum"
                   style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
-                  onFocus={e => e.target.style.borderColor = TEAL}
+                  onFocus={e => e.target.style.borderColor = ROSE}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
 
               {/* Photo mode */}
               {inputMode === 'photo' && (
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
-                    Photo of product or ad
-                  </label>
-                  <input ref={fileRef} type="file" accept="image/*" capture="environment"
-                    onChange={handlePhotoSelect} style={{ display: 'none' }} />
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Photo of product or ad</label>
+                  <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handlePhotoSelect} style={{ display: 'none' }} />
                   {!photo ? (
                     <button onClick={() => fileRef.current?.click()} style={{
                       width: '100%', padding: '28px 20px', border: '2px dashed #e2e8f0',
                       borderRadius: 12, background: '#fafafa', cursor: 'pointer',
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, fontFamily: 'inherit',
                     }}
-                      onMouseEnter={e => { (e.currentTarget).style.borderColor = TEAL; (e.currentTarget).style.background = TEAL_LIGHT; }}
+                      onMouseEnter={e => { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.background = ROSE_LIGHT; }}
                       onMouseLeave={e => { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.background = '#fafafa'; }}
                     >
-                      <span style={{ fontSize: 32 }}>📷</span>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}>Photo the product, packaging or Instagram ad</span>
+                      <IconCamera size={32} color={ROSE} />
+                      <span style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}>Photo the product, packaging or ad</span>
                       <span style={{ fontSize: 12, color: '#94a3b8' }}>Works with screenshots too</span>
                     </button>
                   ) : (
-                    <div style={{ border: `1.5px solid ${TEAL}44`, borderRadius: 12, padding: '14px 16px', background: TEAL_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ border: `1.5px solid ${ROSE}44`, borderRadius: 12, padding: '14px 16px', background: ROSE_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontSize: 20, color: TEAL }}>✓</span>
+                        <span style={{ fontSize: 16, color: ROSE }}>✓</span>
                         <div>
                           <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>Photo ready</div>
                           <div style={{ fontSize: 12, color: '#64748b' }}>{photoName}</div>
                         </div>
                       </div>
-                      <button onClick={() => { setPhoto(null); setPhotoName(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: TEAL, fontFamily: 'inherit', fontWeight: 600 }}>Change</button>
+                      <button onClick={() => { setPhoto(null); setPhotoName(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: ROSE, fontFamily: 'inherit', fontWeight: 600 }}>Change</button>
                     </div>
                   )}
                 </div>
@@ -245,7 +244,7 @@ Be honest and direct. Do not give benefit of the doubt to vague claims. If ingre
                 <textarea value={brandClaim} onChange={e => setBrandClaim(e.target.value)}
                   placeholder="e.g. 'Reduces wrinkles by 87% in 7 days', 'clinically proven stem cell technology', 'as seen on Dragon's Den'…"
                   rows={3} style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
-                  onFocus={e => e.target.style.borderColor = TEAL}
+                  onFocus={e => e.target.style.borderColor = ROSE}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
 
@@ -257,44 +256,40 @@ Be honest and direct. Do not give benefit of the doubt to vague claims. If ingre
                 <textarea value={ingredients} onChange={e => setIngredients(e.target.value)}
                   placeholder="Paste from packaging, website, or an app like INCI Beauty…"
                   rows={3} style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
-                  onFocus={e => e.target.style.borderColor = TEAL}
+                  onFocus={e => e.target.style.borderColor = ROSE}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
 
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>
-                💡 <strong>Tip:</strong> Screenshot an Instagram ad and upload it directly — Skinsight will read the claims and cross-reference them against skincare science.
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <IconLightbulb size={14} color={ROSE} />
+                <span><strong>Tip:</strong> Screenshot a TikTok or Instagram ad and upload it directly — Skyn Karma will read the claims and cross-reference them against skincare science.</span>
               </div>
 
               {error && <div style={{ color: '#ef4444', fontSize: 13 }}>{error}</div>}
 
               <button onClick={handleCheck} disabled={!canSubmit || loading} style={{
-                padding: '13px', background: canSubmit && !loading ? TEAL : '#e2e8f0',
+                padding: '13px', background: canSubmit && !loading ? ROSE : '#e2e8f0',
                 color: canSubmit && !loading ? '#fff' : '#94a3b8',
                 border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600,
                 cursor: canSubmit && !loading ? 'pointer' : 'default',
                 fontFamily: 'inherit', transition: 'all 0.15s ease',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}>
-                {loading ? 'Investigating…' : '🕵️ Run reality check →'}
+                {loading ? 'Investigating…' : <><IconWarning size={16} color={canSubmit && !loading ? '#fff' : '#94a3b8'} /> Run reality check →</>}
               </button>
             </div>
 
           ) : (
             <div>
-              {/* Verdict header */}
-              <div style={{
-                background: vc!.bg, border: `1px solid ${vc!.border}`,
-                borderRadius: 16, padding: '20px',
-                marginBottom: 20, borderLeft: `4px solid ${vc!.color}`,
-              }}>
+              <div style={{ background: vc!.bg, border: `1px solid ${vc!.border}`, borderRadius: 16, padding: '20px', marginBottom: 20, borderLeft: `4px solid ${vc!.color}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 28 }}>{vc!.emoji}</span>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: vc!.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 16, fontWeight: 700 }}>{vc!.icon}</div>
                     <div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: vc!.color, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Verdict</div>
                       <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a' }}>{vc!.label}</div>
                     </div>
                   </div>
-                  {/* Legitimacy score */}
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: 28, fontWeight: 800, color: vc!.color }}>{verdict.score}</div>
                     <div style={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>/ 100</div>
@@ -303,76 +298,52 @@ Be honest and direct. Do not give benefit of the doubt to vague claims. If ingre
                 <p style={{ margin: 0, fontSize: 14, color: '#374151', lineHeight: 1.6 }}>{verdict.summary}</p>
               </div>
 
-              {/* Claims vs Reality */}
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  📢 Claims vs Reality
+              {[
+                { label: 'Claims vs Reality', content: verdict.claimsVsReality },
+                { label: 'Ingredient Truth', content: verdict.ingredientTruth },
+              ].map(({ label, content }) => (
+                <div key={label} style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>{label}</div>
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: '#374151', lineHeight: 1.6 }}>{content}</div>
                 </div>
-                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: '#374151', lineHeight: 1.6 }}>
-                  {verdict.claimsVsReality}
-                </div>
-              </div>
+              ))}
 
-              {/* Ingredient truth */}
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  🔬 Ingredient Truth
-                </div>
-                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: '#374151', lineHeight: 1.6 }}>
-                  {verdict.ingredientTruth}
-                </div>
-              </div>
-
-              {/* Red & green flags */}
               <div style={{ display: 'grid', gridTemplateColumns: verdict.greenFlags?.length ? '1fr 1fr' : '1fr', gap: 12, marginBottom: 16 }}>
                 {verdict.redFlags?.length > 0 && (
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#ef4444', marginBottom: 8 }}>🚩 Red Flags</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#ef4444', marginBottom: 8 }}>Red Flags</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {verdict.redFlags.map((f, i) => (
-                        <div key={i} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#374151', lineHeight: 1.4 }}>
-                          {f}
-                        </div>
+                        <div key={i} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#374151', lineHeight: 1.4 }}>{f}</div>
                       ))}
                     </div>
                   </div>
                 )}
                 {verdict.greenFlags?.length > 0 && (
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#10b981', marginBottom: 8 }}>✅ Green Flags</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#10b981', marginBottom: 8 }}>Green Flags</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {verdict.greenFlags.map((f, i) => (
-                        <div key={i} style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#374151', lineHeight: 1.4 }}>
-                          {f}
-                        </div>
+                        <div key={i} style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#374151', lineHeight: 1.4 }}>{f}</div>
                       ))}
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Alternatives */}
               {verdict.alternatives && (
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>💡 Better Alternatives</div>
-                  <div style={{ background: TEAL_LIGHT, border: `1px solid ${TEAL_MID}`, borderRadius: 10, padding: '12px 14px', fontSize: 14, color: '#374151', lineHeight: 1.6 }}>
-                    {verdict.alternatives}
-                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>Better Alternatives</div>
+                  <div style={{ background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 10, padding: '12px 14px', fontSize: 14, color: '#374151', lineHeight: 1.6 }}>{verdict.alternatives}</div>
                 </div>
               )}
 
-              {/* Bottom line */}
               <div style={{ background: '#0f172a', borderRadius: 12, padding: '16px 18px', marginBottom: 20 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Bottom Line</div>
                 <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1.5 }}>{verdict.bottomLine}</div>
               </div>
 
-              <button onClick={reset} style={{
-                width: '100%', padding: '12px', background: TEAL_LIGHT,
-                border: `1px solid ${TEAL_MID}`, borderRadius: 10,
-                fontSize: 14, color: TEAL, fontWeight: 600,
-                cursor: 'pointer', fontFamily: 'inherit',
-              }}>
+              <button onClick={reset} style={{ width: '100%', padding: '12px', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 10, fontSize: 14, color: ROSE, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                 Check another product
               </button>
             </div>
