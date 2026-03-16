@@ -36,11 +36,11 @@ function CookieBanner() {
   const [visible, setVisible] = useState(true);
   if (!visible) return null;
   return (
-    <div style={{
+   <div style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 999,
-      background: '#0f172a', padding: '12px 24px',
+      background: '#0f172a', padding: '12px 20px',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      gap: 16, flexWrap: 'wrap',
+      gap: 12, flexWrap: 'wrap',
     }}>
       <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
         We use cookies to keep you logged in. No tracking, no ads.{' '}
@@ -361,6 +361,8 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
           .hide-mobile-landing { display: none !important; }
           .show-mobile-landing { display: inline !important; }
           .tools-grid { grid-template-columns: 1fr 1fr !important; }
+          .cookie-banner-text { text-align: center; width: 100%; }
+          .cookie-banner-btn { width: 100%; text-align: center; }
         }
         @media (min-width: 481px) and (max-width: 768px) {
           .tools-grid { grid-template-columns: 1fr 1fr !important; }
