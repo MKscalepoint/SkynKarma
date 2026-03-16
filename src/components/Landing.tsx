@@ -85,6 +85,13 @@ const IconList = ({ size = 28, color = ROSE }: { size?: number; color?: string }
   </svg>
 );
 
+const IconWarning = ({ size = 28, color = ROSE }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+);
+
 const IconBook = ({ size = 28, color = ROSE }: { size?: number; color?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
@@ -173,15 +180,6 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
         </div>
       </div>
 
-      {/* Roadmap strip */}
-      <div style={{
-        background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`,
-        borderRadius: 12, padding: '14px 24px', textAlign: 'center',
-        fontSize: 14, color: ROSE, maxWidth: 860, margin: '0 auto 48px',
-      }}>
-        <strong>On the roadmap:</strong> skin journey tracking, monthly insight recaps, conversation memory and more — Skyn Karma gets smarter the longer you use it.
-      </div>
-
       {/* How it works */}
       <div style={{
         background: '#fafafa', borderTop: '1px solid #f1f5f9',
@@ -225,6 +223,7 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
             { icon: <IconFlask />, title: 'Ingredient Decoder', desc: 'Paste any INCI ingredient list and get a plain-English breakdown — what each ingredient does, whether anything is irritating, and red flags to watch out for.' },
             { icon: <IconShieldCheck />, title: 'Check Products', desc: 'Add multiple products and get a full compatibility report — conflicts highlighted by severity, correct layering order, and which products belong in AM vs PM.' },
             { icon: <IconList />, title: 'My Routine Builder', desc: 'Build and save your personalised AM and PM routine as you go. Every product stored, ordered, and ready to reference whenever you need it.' },
+            { icon: <IconWarning />, title: 'Reality Check', desc: 'Seen it on TikTok or Instagram? Paste a product claim and find out if it\'s backed by science or just clever marketing.' },
           ].map(({ icon, title, desc }) => (
             <div key={title} style={{
               background: '#ffffff', border: '1px solid #e2e8f0',
@@ -242,6 +241,15 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Roadmap strip */}
+      <div style={{
+        background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`,
+        borderRadius: 12, padding: '14px 24px', textAlign: 'center',
+        fontSize: 14, color: ROSE, maxWidth: 860, margin: '-24px auto 64px',
+      }}>
+        <strong>On the roadmap:</strong> skin journey tracking, monthly insight recaps, conversation memory and more — Skyn Karma gets smarter the longer you use it.
       </div>
 
       {/* What you can ask */}
