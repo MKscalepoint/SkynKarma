@@ -196,7 +196,7 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
             Features usually locked behind a paywall — free while we&apos;re in early access.
           </p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+        <div className="tools-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
           {[
             { icon: <IconFlask />, title: 'Ingredient Decoder', desc: 'Paste or photograph any ingredient list and get a plain-English breakdown — what each ingredient does, whether anything is irritating, and red flags to watch out for.' },
             { icon: <IconShieldCheck />, title: 'Check Products', desc: 'Add multiple products by name or photo and get a full compatibility report — conflicts highlighted by severity, correct layering order, and AM vs PM split.' },
@@ -339,6 +339,10 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
         @media (max-width: 480px) {
           .hide-mobile-landing { display: none !important; }
           .show-mobile-landing { display: inline !important; }
+          .tools-grid { grid-template-columns: 1fr 1fr !important; }
+        }
+        @media (min-width: 481px) and (max-width: 768px) {
+          .tools-grid { grid-template-columns: 1fr 1fr !important; }
         }
         @media (min-width: 481px) {
           .show-mobile-landing { display: none !important; }
