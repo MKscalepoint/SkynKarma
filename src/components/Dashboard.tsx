@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import { UserProfile, RoutineProduct } from '@/types';
 import { generateId } from '@/lib/storage';
 
-const TEAL = '#0d9488';
-const TEAL_LIGHT = '#f0fdfa';
-const TEAL_MID = '#ccfbf1';
+const TEAL = '#b5737a';
+const TEAL_LIGHT = '#fdf2f3';
+const TEAL_MID = '#f2d0d3';
 
 interface DashboardProps {
   profile: UserProfile;
