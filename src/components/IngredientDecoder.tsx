@@ -53,6 +53,9 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
   const [photo, setPhoto] = useState<string | null>(null);
   const [photoName, setPhotoName] = useState('');
   const [inputMode, setInputMode] = useState<'text' | 'photo'>('text');
+  const [followUp, setFollowUp] = useState('');
+  const [followUpLoading, setFollowUpLoading] = useState(false);
+  const [followUpAnswer, setFollowUpAnswer] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,6 +75,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
     if (inputMode === 'photo' && !photo) return;
     setLoading(true);
     setResult(null);
+    setFollowUpAnswer('');
 
     const profileContext = profile
       ? `User has ${profile.skinType} skin, concerns: ${profile.concerns?.join(', ')}, sensitivities: ${profile.sensitivities || 'none'}.`
@@ -109,7 +113,35 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
     }
   };
 
-  const resetForm = () => { setResult(null); setIngredients(''); setProductName(''); setPhoto(null); setPhotoName(''); };
+  const handleFollowUp = async () => {
+    if (!followUp.trim() || !result) return;
+    setFollowUpLoading(true);
+    try {
+      const messages = [
+        { role: 'user', content: `You previously analysed this product: ${result.productName}. Your analysis was: ${result.analysis}` },
+        { role: 'assistant', content: result.analysis },
+        { role: 'user', content: followUp },
+      ];
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, profile }),
+      });
+      const data = await res.json();
+      const text = data.content?.find((b: { type: string }) => b.type === 'text')?.text || 'Sorry, something went wrong.';
+      setFollowUpAnswer(text);
+      setFollowUp('');
+    } catch {
+      setFollowUpAnswer('Something went wrong. Please try again.');
+    } finally {
+      setFollowUpLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setResult(null); setIngredients(''); setProductName('');
+    setPhoto(null); setPhotoName(''); setFollowUpAnswer(''); setFollowUp('');
+  };
 
   function formatAnalysis(text: string) {
     return text.split('\n').map((line, i) => {
@@ -124,11 +156,11 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
   const canSubmit = inputMode === 'text' ? !!ingredients.trim() : !!photo;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
-      <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 620, maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '24px 24px 90px', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+      <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 620, maxHeight: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
 
         {/* Header */}
-        <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
               <div style={{ width: 32, height: 32, borderRadius: 8, background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -144,8 +176,6 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
           {!result ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-              {/* Mode toggle */}
               <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 10, padding: 4, gap: 4 }}>
                 {(['text', 'photo'] as const).map(mode => (
                   <button key={mode} onClick={() => setInputMode(mode)} style={{
@@ -155,8 +185,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                     fontWeight: inputMode === mode ? 600 : 400,
                     fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
                     boxShadow: inputMode === mode ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-                    transition: 'all 0.15s',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}>
                     {mode === 'text'
                       ? <><IconClipboard size={14} color={inputMode === mode ? '#0f172a' : '#94a3b8'} /> Paste text</>
@@ -165,7 +194,6 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                 ))}
               </div>
 
-              {/* Product name */}
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
                   Product name <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
@@ -177,7 +205,6 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
 
-              {/* Text mode */}
               {inputMode === 'text' && (
                 <>
                   <div>
@@ -197,7 +224,6 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                 </>
               )}
 
-              {/* Photo mode */}
               {inputMode === 'photo' && (
                 <div>
                   <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
@@ -228,8 +254,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                       <button onClick={() => { setPhoto(null); setPhotoName(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: ROSE, fontFamily: 'inherit', fontWeight: 600 }}>Change</button>
                     </div>
                   )}
-                  <p style={{ fontSize: 12, color: '#94a3b8', margin: '8px 0 0', display: 'flex', gap: 6, alignItems: 'flex-start' }}>
-                    <IconLightbulb size={12} color="#94a3b8" />
+                  <p style={{ fontSize: 12, color: '#94a3b8', margin: '8px 0 0' }}>
                     Make sure the text is well-lit and in focus. If results are poor, try pasting the text instead.
                   </p>
                 </div>
@@ -250,8 +275,40 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                 <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#0f172a' }}>{result.productName}</h3>
                 <button onClick={resetForm} style={{ padding: '6px 12px', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 8, fontSize: 13, color: ROSE, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>Decode another</button>
               </div>
-              <div style={{ fontSize: 15, lineHeight: 1.7, color: '#1e293b', listStylePosition: 'inside' }}>
+
+              <div style={{ fontSize: 15, lineHeight: 1.7, color: '#1e293b', listStylePosition: 'inside', marginBottom: 24 }}>
                 {formatAnalysis(result.analysis)}
+              </div>
+
+              {/* Follow-up answer */}
+              {followUpAnswer && (
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '14px 16px', marginBottom: 16, fontSize: 14, color: '#374151', lineHeight: 1.6 }}>
+                  {formatAnalysis(followUpAnswer)}
+                </div>
+              )}
+
+              {/* Follow-up input */}
+              <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Got a follow-up question?</div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    value={followUp}
+                    onChange={e => setFollowUp(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleFollowUp()}
+                    placeholder="e.g. Is this safe for sensitive skin?"
+                    style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0f172a', outline: 'none' }}
+                    onFocus={e => e.target.style.borderColor = ROSE}
+                    onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                  />
+                  <button onClick={handleFollowUp} disabled={!followUp.trim() || followUpLoading} style={{
+                    padding: '10px 16px', background: followUp.trim() && !followUpLoading ? ROSE : '#e2e8f0',
+                    color: followUp.trim() && !followUpLoading ? '#fff' : '#94a3b8',
+                    border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600,
+                    cursor: followUp.trim() && !followUpLoading ? 'pointer' : 'default', fontFamily: 'inherit', flexShrink: 0,
+                  }}>
+                    {followUpLoading ? '…' : '→'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
