@@ -52,6 +52,9 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [showIngredients, setShowIngredients] = useState<Record<string, boolean>>({});
+  const [followUp, setFollowUp] = useState('');
+  const [followUpLoading, setFollowUpLoading] = useState(false);
+  const [followUpAnswer, setFollowUpAnswer] = useState('');
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const addProduct = () => setProducts(prev => [...prev, { id: generateId(), name: '', type: 'Serum', ingredients: '' }]);
@@ -72,10 +75,12 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
   };
 
   const handleAnalyse = async () => {
-    const filled = products.filter(p => p.name.trim());
+    // Count products with name OR photo
+    const filled = products.filter(p => p.name.trim() || p.photo);
     if (filled.length < 2) return;
     setLoading(true);
     setReport(null);
+    setFollowUpAnswer('');
     try {
       const res = await fetch('/api/analyse', {
         method: 'POST',
@@ -91,14 +96,50 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
     }
   };
 
-  const filledCount = products.filter(p => p.name.trim()).length;
+  const handleFollowUp = async () => {
+    if (!followUp.trim() || !report) return;
+    setFollowUpLoading(true);
+    try {
+      const productList = products.filter(p => p.name.trim() || p.photo).map(p => p.name || 'unnamed product').join(', ');
+      const messages = [
+        { role: 'user', content: `You previously analysed these products for compatibility: ${productList}. Your summary was: ${report.summary}` },
+        { role: 'assistant', content: report.summary },
+        { role: 'user', content: followUp },
+      ];
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, profile }),
+      });
+      const data = await res.json();
+      const text = data.content?.find((b: { type: string }) => b.type === 'text')?.text || 'Sorry, something went wrong.';
+      setFollowUpAnswer(text);
+      setFollowUp('');
+    } catch {
+      setFollowUpAnswer('Something went wrong. Please try again.');
+    } finally {
+      setFollowUpLoading(false);
+    }
+  };
+
+  // Count products with name OR photo
+  const filledCount = products.filter(p => p.name.trim() || p.photo).length;
+
   const severityColor = (s: string) => s === 'high' ? '#ef4444' : s === 'medium' ? '#f59e0b' : '#10b981';
   const severityBg = (s: string) => s === 'high' ? '#fef2f2' : s === 'medium' ? '#fffbeb' : '#f0fdf4';
   const severityBorder = (s: string) => s === 'high' ? '#fecaca' : s === 'medium' ? '#fde68a' : '#bbf7d0';
 
+  function formatText(text: string) {
+    return text.split('\n').map((line, i) => {
+      const html = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      if (line.trim() === '') return <div key={i} style={{ height: 6 }} />;
+      return <p key={i} style={{ margin: '0 0 4px' }} dangerouslySetInnerHTML={{ __html: html }} />;
+    });
+  }
+
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
-      <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 700, maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '24px 24px 90px', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+      <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 700, maxHeight: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
 
         {/* Header */}
         <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
@@ -200,7 +241,7 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0f172a' }}>Your Compatibility Report</h3>
-                <button onClick={() => setReport(null)} style={{ padding: '6px 12px', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 8, fontSize: 13, color: ROSE, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>← Edit products</button>
+                <button onClick={() => { setReport(null); setFollowUpAnswer(''); }} style={{ padding: '6px 12px', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 8, fontSize: 13, color: ROSE, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>← Edit products</button>
               </div>
 
               <div style={{ background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 12, padding: '16px 18px', marginBottom: 20 }}>
@@ -264,7 +305,7 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
               </div>
 
               {report.recommendations?.length > 0 && (
-                <div>
+                <div style={{ marginBottom: 20 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 10 }}>Recommendations</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {report.recommendations.map((r, i) => (
@@ -275,6 +316,37 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
                   </div>
                 </div>
               )}
+
+              {/* Follow-up answer */}
+              {followUpAnswer && (
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '14px 16px', marginBottom: 16, fontSize: 14, color: '#374151', lineHeight: 1.6 }}>
+                  {formatText(followUpAnswer)}
+                </div>
+              )}
+
+              {/* Follow-up input */}
+              <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Got a follow-up question?</div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    value={followUp}
+                    onChange={e => setFollowUp(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleFollowUp()}
+                    placeholder="e.g. Can I use these in the same routine?"
+                    style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0f172a', outline: 'none' }}
+                    onFocus={e => e.target.style.borderColor = ROSE}
+                    onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                  />
+                  <button onClick={handleFollowUp} disabled={!followUp.trim() || followUpLoading} style={{
+                    padding: '10px 16px', background: followUp.trim() && !followUpLoading ? ROSE : '#e2e8f0',
+                    color: followUp.trim() && !followUpLoading ? '#fff' : '#94a3b8',
+                    border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600,
+                    cursor: followUp.trim() && !followUpLoading ? 'pointer' : 'default', fontFamily: 'inherit', flexShrink: 0,
+                  }}>
+                    {followUpLoading ? '…' : '→'}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
