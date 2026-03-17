@@ -203,7 +203,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                   <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
                     Photo of ingredient list <span style={{ color: '#ef4444' }}>*</span>
                   </label>
-                  <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handlePhotoSelect} style={{ display: 'none' }} />
+                  <input ref={fileRef} type="file" accept="image/*" onChange={handlePhotoSelect} style={{ display: 'none' }} />
                   {!photo ? (
                     <button onClick={() => fileRef.current?.click()} style={{
                       width: '100%', padding: '32px 20px', border: '2px dashed #e2e8f0', borderRadius: 12,
