@@ -124,9 +124,9 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
                       <div style={{ width: 26, height: 26, borderRadius: 6, background: ROSE, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
                       <input value={p.name} onChange={e => updateProduct(p.id, 'name', e.target.value)}
                         placeholder="Product name (e.g. The Ordinary Niacinamide 10%)"
-                        style={{ flex: 1, border: 'none', background: 'transparent', fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', fontWeight: 500 }} />
+                        style={{ flex: 1, border: 'none', background: 'transparent', fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', fontWeight: 500, minWidth: 0 }} />
                       <select value={p.type} onChange={e => updateProduct(p.id, 'type', e.target.value)}
-                        style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: '4px 8px', fontSize: 12, fontFamily: 'inherit', color: '#64748b', background: '#fff', outline: 'none', flexShrink: 0 }}>
+                        style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: '4px 8px', fontSize: 12, fontFamily: 'inherit', color: '#64748b', background: '#fff', outline: 'none', flexShrink: 0, maxWidth: 100 }}>
                         {PRODUCT_TYPES.map(t => <option key={t}>{t}</option>)}
                       </select>
                       {products.length > 1 && (
@@ -143,7 +143,7 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
                         {showIngredients[p.id] ? 'Hide ingredients' : 'Add ingredient list'}
                       </button>
                       <span style={{ color: '#e2e8f0', fontSize: 12 }}>|</span>
-                      <input ref={el => { fileRefs.current[p.id] = el; }} type="file" accept="image/*" capture="environment"
+                      <input ref={el => { fileRefs.current[p.id] = el; }} type="file" accept="image/*"
                         onChange={e => handlePhotoSelect(p.id, e)} style={{ display: 'none' }} />
                       {!p.photo ? (
                         <button onClick={() => fileRefs.current[p.id]?.click()}
