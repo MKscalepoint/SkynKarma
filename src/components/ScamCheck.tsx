@@ -68,6 +68,9 @@ export default function ScamCheck({ profile, onClose }: ScamCheckProps) {
   const [loading, setLoading] = useState(false);
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [error, setError] = useState('');
+  const [followUp, setFollowUp] = useState('');
+  const [followUpLoading, setFollowUpLoading] = useState(false);
+  const [followUpAnswer, setFollowUpAnswer] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,6 +90,7 @@ export default function ScamCheck({ profile, onClose }: ScamCheckProps) {
     setLoading(true);
     setVerdict(null);
     setError('');
+    setFollowUpAnswer('');
 
     const prompt = `You are Skyn Karma's product authenticity expert. A user wants to know if a skincare product is legitimate or potentially a scam/misleading.
 
@@ -107,9 +111,7 @@ Analyse this product thoroughly and respond ONLY with a valid JSON object in exa
   "greenFlags": ["<flag 1 if any>", "<flag 2 if any>"],
   "alternatives": "<Suggest 1-2 better value or more honest alternatives that do the same job, if relevant>",
   "bottomLine": "<One punchy sentence — should they buy it or not?>"
-}
-
-Be honest and direct. Do not give benefit of the doubt to vague claims. If ingredients aren't provided, base your assessment on the product name, brand claims, and any known information about this product. If it's a brand you don't recognise, say so clearly.`;
+}`;
 
     try {
       let messages;
@@ -142,17 +144,51 @@ Be honest and direct. Do not give benefit of the doubt to vague claims. If ingre
     }
   };
 
+  const handleFollowUp = async () => {
+    if (!followUp.trim() || !verdict) return;
+    setFollowUpLoading(true);
+    try {
+      const messages = [
+        { role: 'user', content: `You previously assessed "${productName || 'a product'}" and gave this verdict: ${verdict.summary}. Bottom line: ${verdict.bottomLine}` },
+        { role: 'assistant', content: `Verdict: ${verdict.verdict}. ${verdict.summary} ${verdict.bottomLine}` },
+        { role: 'user', content: followUp },
+      ];
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, profile }),
+      });
+      const data = await res.json();
+      const text = data.content?.find((b: { type: string }) => b.type === 'text')?.text || 'Sorry, something went wrong.';
+      setFollowUpAnswer(text);
+      setFollowUp('');
+    } catch {
+      setFollowUpAnswer('Something went wrong. Please try again.');
+    } finally {
+      setFollowUpLoading(false);
+    }
+  };
+
   const reset = () => {
     setVerdict(null); setProductName(''); setBrandClaim('');
-    setIngredients(''); setPhoto(null); setPhotoName(''); setError('');
+    setIngredients(''); setPhoto(null); setPhotoName('');
+    setError(''); setFollowUpAnswer(''); setFollowUp('');
   };
 
   const canSubmit = productName.trim() || photo;
   const vc = verdict ? VERDICT_CONFIG[verdict.verdict] : null;
 
+  function formatText(text: string) {
+    return text.split('\n').map((line, i) => {
+      const html = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      if (line.trim() === '') return <div key={i} style={{ height: 6 }} />;
+      return <p key={i} style={{ margin: '0 0 4px' }} dangerouslySetInnerHTML={{ __html: html }} />;
+    });
+  }
+
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
-      <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 640, maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '24px 24px 90px', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+      <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 640, maxHeight: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
 
         {/* Header */}
         <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
@@ -171,8 +207,6 @@ Be honest and direct. Do not give benefit of the doubt to vague claims. If ingre
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
           {!verdict ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-              {/* Mode toggle */}
               <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 10, padding: 4, gap: 4 }}>
                 {(['text', 'photo'] as const).map(mode => (
                   <button key={mode} onClick={() => setInputMode(mode)} style={{
@@ -182,15 +216,13 @@ Be honest and direct. Do not give benefit of the doubt to vague claims. If ingre
                     fontWeight: inputMode === mode ? 600 : 400,
                     fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
                     boxShadow: inputMode === mode ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-                    transition: 'all 0.15s',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}>
                     {mode === 'text' ? <><IconSearch size={14} color={inputMode === mode ? '#0f172a' : '#94a3b8'} /> Enter product details</> : <><IconCamera size={14} color={inputMode === mode ? '#0f172a' : '#94a3b8'} /> Photo the ad or product</>}
                   </button>
                 ))}
               </div>
 
-              {/* Product name */}
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
                   Product name {inputMode === 'text' && <span style={{ color: '#ef4444' }}>*</span>}
@@ -203,7 +235,6 @@ Be honest and direct. Do not give benefit of the doubt to vague claims. If ingre
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
 
-              {/* Photo mode */}
               {inputMode === 'photo' && (
                 <div>
                   <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Photo of product or ad</label>
@@ -236,19 +267,17 @@ Be honest and direct. Do not give benefit of the doubt to vague claims. If ingre
                 </div>
               )}
 
-              {/* Brand claims */}
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
                   What does the brand claim? <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional but helps)</span>
                 </label>
                 <textarea value={brandClaim} onChange={e => setBrandClaim(e.target.value)}
-                  placeholder="e.g. 'Reduces wrinkles by 87% in 7 days', 'clinically proven stem cell technology', 'as seen on Dragon's Den'…"
+                  placeholder="e.g. 'Reduces wrinkles by 87% in 7 days', 'clinically proven stem cell technology'…"
                   rows={3} style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
                   onFocus={e => e.target.style.borderColor = ROSE}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
 
-              {/* Ingredients */}
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
                   Ingredient list <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional — makes analysis much more accurate)</span>
@@ -341,6 +370,37 @@ Be honest and direct. Do not give benefit of the doubt to vague claims. If ingre
               <div style={{ background: '#0f172a', borderRadius: 12, padding: '16px 18px', marginBottom: 20 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Bottom Line</div>
                 <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1.5 }}>{verdict.bottomLine}</div>
+              </div>
+
+              {/* Follow-up answer */}
+              {followUpAnswer && (
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '14px 16px', marginBottom: 16, fontSize: 14, color: '#374151', lineHeight: 1.6 }}>
+                  {formatText(followUpAnswer)}
+                </div>
+              )}
+
+              {/* Follow-up input */}
+              <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 16, marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Got a follow-up question?</div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    value={followUp}
+                    onChange={e => setFollowUp(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleFollowUp()}
+                    placeholder="e.g. What would you recommend instead?"
+                    style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0f172a', outline: 'none' }}
+                    onFocus={e => e.target.style.borderColor = ROSE}
+                    onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                  />
+                  <button onClick={handleFollowUp} disabled={!followUp.trim() || followUpLoading} style={{
+                    padding: '10px 16px', background: followUp.trim() && !followUpLoading ? ROSE : '#e2e8f0',
+                    color: followUp.trim() && !followUpLoading ? '#fff' : '#94a3b8',
+                    border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600,
+                    cursor: followUp.trim() && !followUpLoading ? 'pointer' : 'default', fontFamily: 'inherit', flexShrink: 0,
+                  }}>
+                    {followUpLoading ? '…' : '→'}
+                  </button>
+                </div>
               </div>
 
               <button onClick={reset} style={{ width: '100%', padding: '12px', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 10, fontSize: 14, color: ROSE, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
