@@ -58,6 +58,45 @@ const IconLightbulb = ({ size = 14, color = '#64748b' }: { size?: number; color?
   </svg>
 );
 
+async function compressImage(base64: string): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxSize = 800;
+      let { width, height } = img;
+      if (width > height && width > maxSize) { height = (height * maxSize) / width; width = maxSize; }
+      else if (height > maxSize) { width = (width * maxSize) / height; height = maxSize; }
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', 0.7).split(',')[1]);
+    };
+    img.src = `data:image/jpeg;base64,${base64}`;
+  });
+}
+
+// Robustly extract JSON from model response
+function extractJSON(text: string): Verdict | null {
+  try {
+    // Try direct parse first
+    return JSON.parse(text) as Verdict;
+  } catch {
+    // Try extracting from markdown code block
+    const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (match) {
+      try { return JSON.parse(match[1].trim()) as Verdict; } catch { /* continue */ }
+    }
+    // Try finding first { to last }
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start !== -1 && end !== -1) {
+      try { return JSON.parse(text.slice(start, end + 1)) as Verdict; } catch { /* continue */ }
+    }
+    return null;
+  }
+}
+
 export default function ScamCheck({ profile, onClose }: ScamCheckProps) {
   const [productName, setProductName] = useState('');
   const [brandClaim, setBrandClaim] = useState('');
@@ -72,15 +111,18 @@ export default function ScamCheck({ profile, onClose }: ScamCheckProps) {
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [followUpAnswer, setFollowUpAnswer] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+  const resultsTopRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoName(file.name);
     const reader = new FileReader();
-    reader.onload = () => {
-      const res = reader.result as string;
-      setPhoto(res.split(',')[1]);
+    reader.onload = async () => {
+      const raw = (reader.result as string).split(',')[1];
+      const compressed = await compressImage(raw);
+      setPhoto(compressed);
     };
     reader.readAsDataURL(file);
   };
@@ -92,25 +134,24 @@ export default function ScamCheck({ profile, onClose }: ScamCheckProps) {
     setError('');
     setFollowUpAnswer('');
 
-    const prompt = `You are Skyn Karma's product authenticity expert. A user wants to know if a skincare product is legitimate or potentially a scam/misleading.
+    const prompt = `You are Skyn Karma's product authenticity expert. Analyse this skincare product and respond ONLY with a valid JSON object — no markdown, no text outside the JSON.
 
 Product name: ${productName || 'Unknown (see photo)'}
-Brand claims / ad copy: ${brandClaim || 'Not provided'}
+Brand claims: ${brandClaim || 'Not provided'}
 Ingredient list: ${ingredients || 'Not provided'}
 ${profile ? `User skin type: ${profile.skinType}, concerns: ${profile.concerns?.join(', ')}` : ''}
 
-Analyse this product thoroughly and respond ONLY with a valid JSON object in exactly this format (no markdown, no explanation outside the JSON):
-
+JSON format (use exactly these keys):
 {
-  "score": <number 0-100 where 100 = completely legitimate, 0 = definite scam>,
-  "verdict": <"legit" | "overpriced" | "misleading" | "scam">,
-  "summary": "<1-2 sentence plain English verdict>",
-  "claimsVsReality": "<What they claim vs what the ingredients actually do. Be specific.>",
-  "ingredientTruth": "<Analysis of key ingredients — are the hero ingredients actually present in meaningful amounts? Any red flags in the formulation?>",
-  "redFlags": ["<flag 1>", "<flag 2>", "<flag 3 if applicable>"],
-  "greenFlags": ["<flag 1 if any>", "<flag 2 if any>"],
-  "alternatives": "<Suggest 1-2 better value or more honest alternatives that do the same job, if relevant>",
-  "bottomLine": "<One punchy sentence — should they buy it or not?>"
+  "score": <0-100, where 100=completely legitimate>,
+  "verdict": <"legit"|"overpriced"|"misleading"|"scam">,
+  "summary": "<1-2 sentence verdict>",
+  "claimsVsReality": "<claims vs what ingredients actually do>",
+  "ingredientTruth": "<key ingredient analysis>",
+  "redFlags": ["<flag>"],
+  "greenFlags": ["<flag>"],
+  "alternatives": "<better alternatives if relevant>",
+  "bottomLine": "<one punchy sentence>"
 }`;
 
     try {
@@ -120,7 +161,7 @@ Analyse this product thoroughly and respond ONLY with a valid JSON object in exa
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: photo } },
-            { type: 'text', text: prompt + '\n\nAlso extract any relevant product information visible in the image.' }
+            { type: 'text', text: prompt + '\n\nAlso extract relevant product info from the image.' }
           ]
         }];
       } else {
@@ -134,9 +175,10 @@ Analyse this product thoroughly and respond ONLY with a valid JSON object in exa
       });
       const data = await res.json();
       const text = data.content?.find((b: { type: string }) => b.type === 'text')?.text || '';
-      const clean = text.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(clean) as Verdict;
+      const parsed = extractJSON(text);
+      if (!parsed) throw new Error('Could not parse response');
       setVerdict(parsed);
+      setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {
@@ -149,8 +191,8 @@ Analyse this product thoroughly and respond ONLY with a valid JSON object in exa
     setFollowUpLoading(true);
     try {
       const messages = [
-        { role: 'user', content: `You previously assessed "${productName || 'a product'}" and gave this verdict: ${verdict.summary}. Bottom line: ${verdict.bottomLine}` },
-        { role: 'assistant', content: `Verdict: ${verdict.verdict}. ${verdict.summary} ${verdict.bottomLine}` },
+        { role: 'user', content: `You assessed "${productName || 'a product'}" with verdict: ${verdict.verdict}. Summary: ${verdict.summary}` },
+        { role: 'assistant', content: `${verdict.verdict}: ${verdict.summary} ${verdict.bottomLine}` },
         { role: 'user', content: followUp },
       ];
       const res = await fetch('/api/chat', {
@@ -173,6 +215,7 @@ Analyse this product thoroughly and respond ONLY with a valid JSON object in exa
     setVerdict(null); setProductName(''); setBrandClaim('');
     setIngredients(''); setPhoto(null); setPhotoName('');
     setError(''); setFollowUpAnswer(''); setFollowUp('');
+    setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
   };
 
   const canSubmit = productName.trim() || photo;
@@ -191,7 +234,7 @@ Analyse this product thoroughly and respond ONLY with a valid JSON object in exa
       <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 640, maxHeight: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
 
         {/* Header */}
-        <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
               <div style={{ width: 32, height: 32, borderRadius: 8, background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -204,9 +247,9 @@ Analyse this product thoroughly and respond ONLY with a valid JSON object in exa
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 18, color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
+        <div ref={scrollContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {!verdict ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 10, padding: 4, gap: 4 }}>
                 {(['text', 'photo'] as const).map(mode => (
                   <button key={mode} onClick={() => setInputMode(mode)} style={{
@@ -230,7 +273,7 @@ Analyse this product thoroughly and respond ONLY with a valid JSON object in exa
                 </label>
                 <input value={productName} onChange={e => setProductName(e.target.value)}
                   placeholder="e.g. GlowLab Pro Stem Cell Regenerating Serum"
-                  style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
                   onFocus={e => e.target.style.borderColor = ROSE}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
@@ -241,16 +284,15 @@ Analyse this product thoroughly and respond ONLY with a valid JSON object in exa
                   <input ref={fileRef} type="file" accept="image/*" onChange={handlePhotoSelect} style={{ display: 'none' }} />
                   {!photo ? (
                     <button onClick={() => fileRef.current?.click()} style={{
-                      width: '100%', padding: '28px 20px', border: '2px dashed #e2e8f0',
-                      borderRadius: 12, background: '#fafafa', cursor: 'pointer',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, fontFamily: 'inherit',
+                      width: '100%', padding: '24px 20px', border: '2px dashed #e2e8f0', borderRadius: 12,
+                      background: '#fafafa', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, fontFamily: 'inherit',
                     }}
                       onMouseEnter={e => { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.background = ROSE_LIGHT; }}
                       onMouseLeave={e => { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.background = '#fafafa'; }}
                     >
-                      <IconCamera size={32} color={ROSE} />
+                      <IconCamera size={28} color={ROSE} />
                       <span style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}>Photo the product, packaging or ad</span>
-                      <span style={{ fontSize: 12, color: '#94a3b8' }}>Works with screenshots too</span>
+                      <span style={{ fontSize: 12, color: '#94a3b8' }}>Works with screenshots — auto compressed</span>
                     </button>
                   ) : (
                     <div style={{ border: `1.5px solid ${ROSE}44`, borderRadius: 12, padding: '14px 16px', background: ROSE_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -272,26 +314,26 @@ Analyse this product thoroughly and respond ONLY with a valid JSON object in exa
                   What does the brand claim? <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional but helps)</span>
                 </label>
                 <textarea value={brandClaim} onChange={e => setBrandClaim(e.target.value)}
-                  placeholder="e.g. 'Reduces wrinkles by 87% in 7 days', 'clinically proven stem cell technology'…"
-                  rows={3} style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
+                  placeholder="e.g. 'Reduces wrinkles by 87% in 7 days', 'clinically proven'…"
+                  rows={2} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
                   onFocus={e => e.target.style.borderColor = ROSE}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
 
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
-                  Ingredient list <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional — makes analysis much more accurate)</span>
+                  Ingredient list <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional — makes analysis more accurate)</span>
                 </label>
                 <textarea value={ingredients} onChange={e => setIngredients(e.target.value)}
                   placeholder="Paste from packaging, website, or an app like INCI Beauty…"
-                  rows={3} style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
+                  rows={2} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
                   onFocus={e => e.target.style.borderColor = ROSE}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
 
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                 <IconLightbulb size={14} color={ROSE} />
-                <span><strong>Tip:</strong> Screenshot a TikTok or Instagram ad and upload it directly — Skyn Karma will read the claims and cross-reference them against skincare science.</span>
+                <span><strong>Tip:</strong> Screenshot a TikTok or Instagram ad and upload it — Skyn Karma will read the claims and cross-reference them against skincare science.</span>
               </div>
 
               {error && <div style={{ color: '#ef4444', fontSize: 13 }}>{error}</div>}
@@ -309,7 +351,7 @@ Analyse this product thoroughly and respond ONLY with a valid JSON object in exa
             </div>
 
           ) : (
-            <div>
+            <div ref={resultsTopRef}>
               <div style={{ background: vc!.bg, border: `1px solid ${vc!.border}`, borderRadius: 16, padding: '20px', marginBottom: 20, borderLeft: `4px solid ${vc!.color}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -372,26 +414,21 @@ Analyse this product thoroughly and respond ONLY with a valid JSON object in exa
                 <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1.5 }}>{verdict.bottomLine}</div>
               </div>
 
-              {/* Follow-up answer */}
               {followUpAnswer && (
                 <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '14px 16px', marginBottom: 16, fontSize: 14, color: '#374151', lineHeight: 1.6 }}>
                   {formatText(followUpAnswer)}
                 </div>
               )}
 
-              {/* Follow-up input */}
               <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 16, marginBottom: 16 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Got a follow-up question?</div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    value={followUp}
-                    onChange={e => setFollowUp(e.target.value)}
+                  <input value={followUp} onChange={e => setFollowUp(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleFollowUp()}
                     placeholder="e.g. What would you recommend instead?"
                     style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0f172a', outline: 'none' }}
                     onFocus={e => e.target.style.borderColor = ROSE}
-                    onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-                  />
+                    onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                   <button onClick={handleFollowUp} disabled={!followUp.trim() || followUpLoading} style={{
                     padding: '10px 16px', background: followUp.trim() && !followUpLoading ? ROSE : '#e2e8f0',
                     color: followUp.trim() && !followUpLoading ? '#fff' : '#94a3b8',
