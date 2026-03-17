@@ -44,6 +44,23 @@ const IconLightbulb = ({ size = 14, color = ROSE }: { size?: number; color?: str
   </svg>
 );
 
+async function compressImage(base64: string): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxSize = 800;
+      let { width, height } = img;
+      if (width > height && width > maxSize) { height = (height * maxSize) / width; width = maxSize; }
+      else if (height > maxSize) { width = (width * maxSize) / height; height = maxSize; }
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', 0.7).split(',')[1]);
+    };
+    img.src = `data:image/jpeg;base64,${base64}`;
+  });
+}
+
 export default function CheckProducts({ profile, onClose }: CheckProductsProps) {
   const [products, setProducts] = useState<ProductEntryWithPhoto[]>([
     { id: generateId(), name: '', type: 'Serum', ingredients: '' },
@@ -56,6 +73,8 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [followUpAnswer, setFollowUpAnswer] = useState('');
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const resultsTopRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const addProduct = () => setProducts(prev => [...prev, { id: generateId(), name: '', type: 'Serum', ingredients: '' }]);
   const removeProduct = (id: string) => setProducts(prev => prev.filter(p => p.id !== id));
@@ -63,20 +82,20 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
     setProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
   };
 
-  const handlePhotoSelect = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      setProducts(prev => prev.map(p => p.id === id ? { ...p, photo: result.split(',')[1], photoName: file.name } : p));
+    reader.onload = async () => {
+      const raw = (reader.result as string).split(',')[1];
+      const compressed = await compressImage(raw);
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, photo: compressed, photoName: file.name } : p));
     };
     reader.readAsDataURL(file);
   };
 
   const handleAnalyse = async () => {
-    // Count products with name OR photo
-    const filled = products.filter(p => p.name.trim() || p.photo);
+    const filled = products.filter(p => p.name.trim());
     if (filled.length < 2) return;
     setLoading(true);
     setReport(null);
@@ -89,6 +108,7 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
       });
       const data = await res.json();
       setReport(data);
+      setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
     } catch {
       alert('Something went wrong. Please try again.');
     } finally {
@@ -100,9 +120,9 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
     if (!followUp.trim() || !report) return;
     setFollowUpLoading(true);
     try {
-      const productList = products.filter(p => p.name.trim() || p.photo).map(p => p.name || 'unnamed product').join(', ');
+      const productList = products.filter(p => p.name.trim()).map(p => p.name).join(', ');
       const messages = [
-        { role: 'user', content: `You previously analysed these products for compatibility: ${productList}. Your summary was: ${report.summary}` },
+        { role: 'user', content: `You analysed these products: ${productList}. Summary: ${report.summary}` },
         { role: 'assistant', content: report.summary },
         { role: 'user', content: followUp },
       ];
@@ -122,8 +142,8 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
     }
   };
 
-  // Count products with name OR photo
-  const filledCount = products.filter(p => p.name.trim() || p.photo).length;
+  // Name required — photo is supplementary only
+  const filledCount = products.filter(p => p.name.trim()).length;
 
   const severityColor = (s: string) => s === 'high' ? '#ef4444' : s === 'medium' ? '#f59e0b' : '#10b981';
   const severityBg = (s: string) => s === 'high' ? '#fef2f2' : s === 'medium' ? '#fffbeb' : '#f0fdf4';
@@ -142,7 +162,7 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
       <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 700, maxHeight: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
 
         {/* Header */}
-        <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
               <div style={{ width: 32, height: 32, borderRadius: 8, background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -150,31 +170,36 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
               </div>
               <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#0f172a' }}>Check My Products</h2>
             </div>
-            <p style={{ margin: 0, fontSize: 14, color: '#64748b' }}>Add products by name or photo — get a full compatibility report</p>
+            <p style={{ margin: 0, fontSize: 14, color: '#64748b' }}>Enter product names below — add photos or ingredients for more accuracy</p>
           </div>
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 18, color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
+        <div ref={scrollContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {!report ? (
             <div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
                 {products.map((p, i) => (
                   <div key={p.id} style={{ border: '1.5px solid #e2e8f0', borderRadius: 12, overflow: 'hidden' }}>
-                    <div style={{ padding: '12px 14px', background: '#fafafa', display: 'flex', gap: 10, alignItems: 'center' }}>
-                      <div style={{ width: 26, height: 26, borderRadius: 6, background: ROSE, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
+                    {/* Product name row — stacked on mobile */}
+                    <div style={{ padding: '12px 14px', background: '#fafafa' }}>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+                        <div style={{ width: 26, height: 26, borderRadius: 6, background: ROSE, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
+                        {products.length > 1 && (
+                          <button onClick={() => removeProduct(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#cbd5e1', fontSize: 18, padding: 0, flexShrink: 0, marginLeft: 'auto' }}
+                            onMouseEnter={e => (e.target as HTMLElement).style.color = '#ef4444'}
+                            onMouseLeave={e => (e.target as HTMLElement).style.color = '#cbd5e1'}>×</button>
+                        )}
+                      </div>
                       <input value={p.name} onChange={e => updateProduct(p.id, 'name', e.target.value)}
-                        placeholder="Product name (e.g. The Ordinary Niacinamide 10%)"
-                        style={{ flex: 1, border: 'none', background: 'transparent', fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', fontWeight: 500, minWidth: 0 }} />
+                        placeholder="Product name e.g. The Ordinary Niacinamide 10%"
+                        style={{ width: '100%', border: '1.5px solid #e2e8f0', borderRadius: 8, padding: '9px 12px', fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', fontWeight: 500, boxSizing: 'border-box', background: '#fff' }}
+                        onFocus={e => e.target.style.borderColor = ROSE}
+                        onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                       <select value={p.type} onChange={e => updateProduct(p.id, 'type', e.target.value)}
-                        style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: '4px 8px', fontSize: 12, fontFamily: 'inherit', color: '#64748b', background: '#fff', outline: 'none', flexShrink: 0, maxWidth: 100 }}>
+                        style={{ marginTop: 8, width: '100%', border: '1px solid #e2e8f0', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', color: '#64748b', background: '#fff', outline: 'none' }}>
                         {PRODUCT_TYPES.map(t => <option key={t}>{t}</option>)}
                       </select>
-                      {products.length > 1 && (
-                        <button onClick={() => removeProduct(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#cbd5e1', fontSize: 18, padding: 0, flexShrink: 0 }}
-                          onMouseEnter={e => (e.target as HTMLElement).style.color = '#ef4444'}
-                          onMouseLeave={e => (e.target as HTMLElement).style.color = '#cbd5e1'}>×</button>
-                      )}
                     </div>
 
                     <div style={{ borderTop: '1px solid #f1f5f9', padding: '10px 14px', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -183,7 +208,7 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
                         <span style={{ color: ROSE, fontSize: 14 }}>{showIngredients[p.id] ? '−' : '+'}</span>
                         {showIngredients[p.id] ? 'Hide ingredients' : 'Add ingredient list'}
                       </button>
-                      <span style={{ color: '#e2e8f0', fontSize: 12 }}>|</span>
+                      <span style={{ color: '#e2e8f0' }}>|</span>
                       <input ref={el => { fileRefs.current[p.id] = el; }} type="file" accept="image/*"
                         onChange={e => handlePhotoSelect(p.id, e)} style={{ display: 'none' }} />
                       {!p.photo ? (
@@ -203,7 +228,7 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
                     {showIngredients[p.id] && (
                       <div style={{ borderTop: '1px solid #f1f5f9', padding: '10px 14px' }}>
                         <textarea value={p.ingredients} onChange={e => updateProduct(p.id, 'ingredients', e.target.value)}
-                          placeholder="Paste ingredient list (optional — improves analysis accuracy)"
+                          placeholder="Paste ingredient list (optional — improves accuracy)"
                           rows={3} style={{ width: '100%', border: '1px solid #e2e8f0', borderRadius: 8, padding: '8px 10px', fontSize: 13, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }}
                           onFocus={e => e.target.style.borderColor = ROSE}
                           onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
@@ -214,17 +239,17 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
               </div>
 
               <button onClick={addProduct} style={{
-                width: '100%', padding: '11px', background: 'transparent',
+                width: '100%', padding: '10px', background: 'transparent',
                 border: '1.5px dashed #e2e8f0', borderRadius: 10,
-                fontSize: 14, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit', marginBottom: 16, transition: 'all 0.15s',
+                fontSize: 14, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit', marginBottom: 14, transition: 'all 0.15s',
               }}
                 onMouseEnter={e => { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.color = ROSE; }}
                 onMouseLeave={e => { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.color = '#64748b'; }}
               >+ Add another product</button>
 
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5, marginBottom: 16, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5, marginBottom: 14, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                 <IconLightbulb size={14} />
-                <span><strong>Tip:</strong> Add ingredient lists or photos for more accurate conflict detection. Product names alone still work well.</span>
+                <span><strong>Tip:</strong> Product names are required. Add ingredient lists or photos for more accurate conflict detection.</span>
               </div>
 
               <button onClick={handleAnalyse} disabled={filledCount < 2 || loading} style={{
@@ -234,14 +259,14 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
                 border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600,
                 cursor: filledCount >= 2 && !loading ? 'pointer' : 'default', fontFamily: 'inherit', transition: 'all 0.15s',
               }}>
-                {loading ? 'Analysing your products…' : `Analyse ${filledCount > 0 ? filledCount : ''} products →`}
+                {loading ? 'Analysing your products…' : filledCount < 2 ? 'Enter at least 2 product names to analyse' : `Analyse ${filledCount} products →`}
               </button>
             </div>
           ) : (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+            <div ref={resultsTopRef}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0f172a' }}>Your Compatibility Report</h3>
-                <button onClick={() => { setReport(null); setFollowUpAnswer(''); }} style={{ padding: '6px 12px', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 8, fontSize: 13, color: ROSE, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>← Edit products</button>
+                <button onClick={() => { setReport(null); setFollowUpAnswer(''); setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50); }} style={{ padding: '6px 12px', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 8, fontSize: 13, color: ROSE, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>← Edit products</button>
               </div>
 
               <div style={{ background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 12, padding: '16px 18px', marginBottom: 20 }}>
@@ -269,7 +294,7 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
               {report.conflicts?.length === 0 && (
                 <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '12px 14px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: 18 }}>✓</span>
-                  <span style={{ fontSize: 14, color: '#065f46', fontWeight: 500 }}>No conflicts detected — this is a compatible product combination!</span>
+                  <span style={{ fontSize: 14, color: '#065f46', fontWeight: 500 }}>No conflicts detected — this is a compatible combination!</span>
                 </div>
               )}
 
@@ -317,26 +342,21 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
                 </div>
               )}
 
-              {/* Follow-up answer */}
               {followUpAnswer && (
                 <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '14px 16px', marginBottom: 16, fontSize: 14, color: '#374151', lineHeight: 1.6 }}>
                   {formatText(followUpAnswer)}
                 </div>
               )}
 
-              {/* Follow-up input */}
               <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Got a follow-up question?</div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    value={followUp}
-                    onChange={e => setFollowUp(e.target.value)}
+                  <input value={followUp} onChange={e => setFollowUp(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleFollowUp()}
                     placeholder="e.g. Can I use these in the same routine?"
                     style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0f172a', outline: 'none' }}
                     onFocus={e => e.target.style.borderColor = ROSE}
-                    onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-                  />
+                    onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                   <button onClick={handleFollowUp} disabled={!followUp.trim() || followUpLoading} style={{
                     padding: '10px 16px', background: followUp.trim() && !followUpLoading ? ROSE : '#e2e8f0',
                     color: followUp.trim() && !followUpLoading ? '#fff' : '#94a3b8',
