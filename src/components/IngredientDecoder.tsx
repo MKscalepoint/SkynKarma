@@ -45,6 +45,32 @@ const IconLightbulb = ({ size = 14, color = ROSE }: { size?: number; color?: str
   </svg>
 );
 
+// Compress image to max 800px and ~70% quality before sending
+async function compressImage(base64: string): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxSize = 800;
+      let { width, height } = img;
+      if (width > height && width > maxSize) {
+        height = (height * maxSize) / width;
+        width = maxSize;
+      } else if (height > maxSize) {
+        width = (width * maxSize) / height;
+        height = maxSize;
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, width, height);
+      const compressed = canvas.toDataURL('image/jpeg', 0.7);
+      resolve(compressed.split(',')[1]);
+    };
+    img.src = `data:image/jpeg;base64,${base64}`;
+  });
+}
+
 export default function IngredientDecoder({ profile, onClose }: IngredientDecoderProps) {
   const [productName, setProductName] = useState('');
   const [ingredients, setIngredients] = useState('');
@@ -57,15 +83,19 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [followUpAnswer, setFollowUpAnswer] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+  const resultsTopRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoName(file.name);
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       const res = reader.result as string;
-      setPhoto(res.split(',')[1]);
+      const raw = res.split(',')[1];
+      const compressed = await compressImage(raw);
+      setPhoto(compressed);
     };
     reader.readAsDataURL(file);
   };
@@ -106,6 +136,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
       const data = await res.json();
       const text = data.content?.find((b: { type: string }) => b.type === 'text')?.text || 'Unable to analyse ingredients.';
       setResult({ productName: productName || 'Your product', analysis: text });
+      setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
     } catch {
       setResult({ productName: 'Error', analysis: 'Something went wrong. Please try again.' });
     } finally {
@@ -141,6 +172,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
   const resetForm = () => {
     setResult(null); setIngredients(''); setProductName('');
     setPhoto(null); setPhotoName(''); setFollowUpAnswer(''); setFollowUp('');
+    setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
   };
 
   function formatAnalysis(text: string) {
@@ -160,7 +192,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
       <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 620, maxHeight: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
 
         {/* Header */}
-        <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
               <div style={{ width: 32, height: 32, borderRadius: 8, background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -168,14 +200,14 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
               </div>
               <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#0f172a' }}>Ingredient Decoder</h2>
             </div>
-            <p style={{ margin: 0, fontSize: 14, color: '#64748b' }}>Paste an ingredient list or photograph the product packaging</p>
+            <p style={{ margin: 0, fontSize: 14, color: '#64748b' }}>Paste an ingredient list or photograph the packaging</p>
           </div>
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 18, color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
+        <div ref={scrollContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {!result ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 10, padding: 4, gap: 4 }}>
                 {(['text', 'photo'] as const).map(mode => (
                   <button key={mode} onClick={() => setInputMode(mode)} style={{
@@ -199,8 +231,8 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                   Product name <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
                 </label>
                 <input value={productName} onChange={e => setProductName(e.target.value)}
-                  placeholder="e.g. COSRX Advanced Snail 96 Mucin Power Essence"
-                  style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
+                  placeholder="e.g. COSRX Snail 96 Mucin Essence"
+                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
                   onFocus={e => e.target.style.borderColor = ROSE}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
@@ -212,14 +244,14 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                       Ingredient list <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <textarea value={ingredients} onChange={e => setIngredients(e.target.value)}
-                      placeholder="Paste the full ingredient list here — copy from the product packaging, website, or an app like INCI Beauty or CosDNA..."
-                      rows={6} style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
+                      placeholder="Paste the full ingredient list here…"
+                      rows={5} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
                       onFocus={e => e.target.style.borderColor = ROSE}
                       onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                   </div>
-                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                     <IconLightbulb size={14} />
-                    <span><strong>Tip:</strong> Find ingredient lists on brand websites, product packaging, or apps like INCI Beauty, CosDNA, or Think Dirty.</span>
+                    <span><strong>Tip:</strong> Find ingredient lists on brand websites, packaging, or apps like INCI Beauty or CosDNA.</span>
                   </div>
                 </>
               )}
@@ -232,15 +264,15 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                   <input ref={fileRef} type="file" accept="image/*" onChange={handlePhotoSelect} style={{ display: 'none' }} />
                   {!photo ? (
                     <button onClick={() => fileRef.current?.click()} style={{
-                      width: '100%', padding: '32px 20px', border: '2px dashed #e2e8f0', borderRadius: 12,
+                      width: '100%', padding: '28px 20px', border: '2px dashed #e2e8f0', borderRadius: 12,
                       background: '#fafafa', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, fontFamily: 'inherit',
                     }}
                       onMouseEnter={e => { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.background = ROSE_LIGHT; }}
                       onMouseLeave={e => { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.background = '#fafafa'; }}
                     >
-                      <IconCamera size={36} color={ROSE} />
+                      <IconCamera size={32} color={ROSE} />
                       <span style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}>Take a photo or upload from library</span>
-                      <span style={{ fontSize: 13, color: '#94a3b8' }}>Point your camera at the ingredient list on the packaging</span>
+                      <span style={{ fontSize: 13, color: '#94a3b8' }}>Photo will be compressed automatically</span>
                     </button>
                   ) : (
                     <div style={{ border: `1.5px solid ${ROSE}44`, borderRadius: 12, padding: '14px 16px', background: ROSE_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
@@ -254,9 +286,6 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                       <button onClick={() => { setPhoto(null); setPhotoName(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: ROSE, fontFamily: 'inherit', fontWeight: 600 }}>Change</button>
                     </div>
                   )}
-                  <p style={{ fontSize: 12, color: '#94a3b8', margin: '8px 0 0' }}>
-                    Make sure the text is well-lit and in focus. If results are poor, try pasting the text instead.
-                  </p>
                 </div>
               )}
 
@@ -270,7 +299,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
               </button>
             </div>
           ) : (
-            <div>
+            <div ref={resultsTopRef}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                 <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#0f172a' }}>{result.productName}</h3>
                 <button onClick={resetForm} style={{ padding: '6px 12px', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 8, fontSize: 13, color: ROSE, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>Decode another</button>
@@ -280,26 +309,21 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                 {formatAnalysis(result.analysis)}
               </div>
 
-              {/* Follow-up answer */}
               {followUpAnswer && (
                 <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '14px 16px', marginBottom: 16, fontSize: 14, color: '#374151', lineHeight: 1.6 }}>
                   {formatAnalysis(followUpAnswer)}
                 </div>
               )}
 
-              {/* Follow-up input */}
               <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Got a follow-up question?</div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    value={followUp}
-                    onChange={e => setFollowUp(e.target.value)}
+                  <input value={followUp} onChange={e => setFollowUp(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleFollowUp()}
                     placeholder="e.g. Is this safe for sensitive skin?"
                     style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0f172a', outline: 'none' }}
                     onFocus={e => e.target.style.borderColor = ROSE}
-                    onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-                  />
+                    onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                   <button onClick={handleFollowUp} disabled={!followUp.trim() || followUpLoading} style={{
                     padding: '10px 16px', background: followUp.trim() && !followUpLoading ? ROSE : '#e2e8f0',
                     color: followUp.trim() && !followUpLoading ? '#fff' : '#94a3b8',
