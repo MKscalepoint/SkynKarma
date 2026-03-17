@@ -207,7 +207,7 @@ Be honest and direct. Do not give benefit of the doubt to vague claims. If ingre
               {inputMode === 'photo' && (
                 <div>
                   <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Photo of product or ad</label>
-                  <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handlePhotoSelect} style={{ display: 'none' }} />
+                  <input ref={fileRef} type="file" accept="image/*" onChange={handlePhotoSelect} style={{ display: 'none' }} />
                   {!photo ? (
                     <button onClick={() => fileRef.current?.click()} style={{
                       width: '100%', padding: '28px 20px', border: '2px dashed #e2e8f0',
