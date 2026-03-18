@@ -45,7 +45,6 @@ const IconLightbulb = ({ size = 14, color = ROSE }: { size?: number; color?: str
   </svg>
 );
 
-// Compress image to max 800px and ~70% quality before sending
 async function compressImage(base64: string): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -53,19 +52,11 @@ async function compressImage(base64: string): Promise<string> {
       const canvas = document.createElement('canvas');
       const maxSize = 800;
       let { width, height } = img;
-      if (width > height && width > maxSize) {
-        height = (height * maxSize) / width;
-        width = maxSize;
-      } else if (height > maxSize) {
-        width = (width * maxSize) / height;
-        height = maxSize;
-      }
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(img, 0, 0, width, height);
-      const compressed = canvas.toDataURL('image/jpeg', 0.7);
-      resolve(compressed.split(',')[1]);
+      if (width > height && width > maxSize) { height = (height * maxSize) / width; width = maxSize; }
+      else if (height > maxSize) { width = (width * maxSize) / height; height = maxSize; }
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', 0.7).split(',')[1]);
     };
     img.src = `data:image/jpeg;base64,${base64}`;
   });
@@ -92,8 +83,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
     setPhotoName(file.name);
     const reader = new FileReader();
     reader.onload = async () => {
-      const res = reader.result as string;
-      const raw = res.split(',')[1];
+      const raw = (reader.result as string).split(',')[1];
       const compressed = await compressImage(raw);
       setPhoto(compressed);
     };
@@ -118,13 +108,13 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: photo } },
-            { type: 'text', text: `You are Skyn Karma, an expert skincare advisor. The user has uploaded a photo of a product ingredient list.\n\n${profileContext}\nProduct: ${productName || 'Unknown product'}\n\nFirst extract the ingredient list from the image, then provide a structured analysis:\n1. **Key active ingredients** — what they do\n2. **Ingredients to note** — issues for this skin type/sensitivities\n3. **Best for** — skin types and concerns\n4. **Overall verdict** — well-formulated?\n5. **Compatibility tip** — layering advice\n\nIf the image is unclear, say so and suggest the user try the paste text option. Bold key ingredient names.` }
+            { type: 'text', text: `You are Skyn Karma, an expert skincare advisor. The user has uploaded a photo of a product ingredient list.\n\n${profileContext}\nProduct: ${productName || 'Unknown product'}\n\nFirst extract the ingredient list from the image, then provide a structured analysis:\n1. **Key active ingredients** — what they do\n2. **Ingredients to note** — issues for this skin type/sensitivities\n3. **Best for** — skin types and concerns\n4. **Overall verdict** — well-formulated?\n5. **Compatibility tip** — layering advice\n\nIf the image is unclear, say so. Bold key ingredient names.` }
           ]
         }];
       } else {
         messages = [{
           role: 'user',
-          content: `You are Skyn Karma, an expert skincare advisor.\n\n${profileContext}\nProduct: ${productName || 'Unknown product'}\nIngredients: ${ingredients}\n\nProvide a structured analysis:\n1. **Key active ingredients** — what they do\n2. **Ingredients to note** — issues for this skin type/sensitivities\n3. **Best for** — skin types and concerns\n4. **Overall verdict** — well-formulated? Marketing hype vs real actives?\n5. **Compatibility tip** — layering advice\n\nBe honest, specific, practical. Bold key ingredient names.`
+          content: `You are Skyn Karma, an expert skincare advisor.\n\n${profileContext}\nProduct: ${productName || 'Unknown product'}\nIngredients: ${ingredients}\n\nProvide a structured analysis:\n1. **Key active ingredients** — what they do\n2. **Ingredients to note** — issues for this skin type/sensitivities\n3. **Best for** — skin types and concerns\n4. **Overall verdict** — well-formulated?\n5. **Compatibility tip** — layering advice\n\nBe honest, specific, practical. Bold key ingredient names.`
         }];
       }
 
@@ -149,7 +139,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
     setFollowUpLoading(true);
     try {
       const messages = [
-        { role: 'user', content: `You previously analysed this product: ${result.productName}. Your analysis was: ${result.analysis}` },
+        { role: 'user', content: `You previously analysed: ${result.productName}. Analysis: ${result.analysis}` },
         { role: 'assistant', content: result.analysis },
         { role: 'user', content: followUp },
       ];
@@ -205,6 +195,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 18, color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
         </div>
 
+        {/* Scrollable content */}
         <div ref={scrollContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {!result ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -288,15 +279,6 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                   )}
                 </div>
               )}
-
-              <button onClick={handleDecode} disabled={!canSubmit || loading} style={{
-                padding: '13px', background: canSubmit && !loading ? ROSE : '#e2e8f0',
-                color: canSubmit && !loading ? '#fff' : '#94a3b8',
-                border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600,
-                cursor: canSubmit && !loading ? 'pointer' : 'default', fontFamily: 'inherit', transition: 'all 0.15s ease',
-              }}>
-                {loading ? 'Analysing ingredients…' : 'Decode ingredients →'}
-              </button>
             </div>
           ) : (
             <div ref={resultsTopRef}>
@@ -304,17 +286,14 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                 <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#0f172a' }}>{result.productName}</h3>
                 <button onClick={resetForm} style={{ padding: '6px 12px', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 8, fontSize: 13, color: ROSE, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>Decode another</button>
               </div>
-
               <div style={{ fontSize: 15, lineHeight: 1.7, color: '#1e293b', listStylePosition: 'inside', marginBottom: 24 }}>
                 {formatAnalysis(result.analysis)}
               </div>
-
               {followUpAnswer && (
                 <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '14px 16px', marginBottom: 16, fontSize: 14, color: '#374151', lineHeight: 1.6 }}>
                   {formatAnalysis(followUpAnswer)}
                 </div>
               )}
-
               <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Got a follow-up question?</div>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -337,6 +316,20 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
             </div>
           )}
         </div>
+
+        {/* Sticky action button — input screen only */}
+        {!result && (
+          <div style={{ padding: '12px 24px 16px', borderTop: '1px solid #f1f5f9', background: '#fff', flexShrink: 0 }}>
+            <button onClick={handleDecode} disabled={!canSubmit || loading} style={{
+              width: '100%', padding: '14px', background: canSubmit && !loading ? ROSE : '#e2e8f0',
+              color: canSubmit && !loading ? '#fff' : '#94a3b8',
+              border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600,
+              cursor: canSubmit && !loading ? 'pointer' : 'default', fontFamily: 'inherit', transition: 'all 0.15s ease',
+            }}>
+              {loading ? 'Analysing ingredients…' : 'Decode ingredients →'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
