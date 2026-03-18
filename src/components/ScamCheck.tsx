@@ -68,33 +68,21 @@ async function compressImage(base64: string): Promise<string> {
       if (width > height && width > maxSize) { height = (height * maxSize) / width; width = maxSize; }
       else if (height > maxSize) { width = (width * maxSize) / height; height = maxSize; }
       canvas.width = width; canvas.height = height;
-      const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(img, 0, 0, width, height);
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
       resolve(canvas.toDataURL('image/jpeg', 0.7).split(',')[1]);
     };
     img.src = `data:image/jpeg;base64,${base64}`;
   });
 }
 
-// Robustly extract JSON from model response
 function extractJSON(text: string): Verdict | null {
-  try {
-    // Try direct parse first
-    return JSON.parse(text) as Verdict;
-  } catch {
-    // Try extracting from markdown code block
-    const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (match) {
-      try { return JSON.parse(match[1].trim()) as Verdict; } catch { /* continue */ }
-    }
-    // Try finding first { to last }
-    const start = text.indexOf('{');
-    const end = text.lastIndexOf('}');
-    if (start !== -1 && end !== -1) {
-      try { return JSON.parse(text.slice(start, end + 1)) as Verdict; } catch { /* continue */ }
-    }
-    return null;
-  }
+  try { return JSON.parse(text) as Verdict; } catch { /* continue */ }
+  const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (match) { try { return JSON.parse(match[1].trim()) as Verdict; } catch { /* continue */ } }
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start !== -1 && end !== -1) { try { return JSON.parse(text.slice(start, end + 1)) as Verdict; } catch { /* continue */ } }
+  return null;
 }
 
 export default function ScamCheck({ profile, onClose }: ScamCheckProps) {
@@ -121,8 +109,7 @@ export default function ScamCheck({ profile, onClose }: ScamCheckProps) {
     const reader = new FileReader();
     reader.onload = async () => {
       const raw = (reader.result as string).split(',')[1];
-      const compressed = await compressImage(raw);
-      setPhoto(compressed);
+      setPhoto(await compressImage(raw));
     };
     reader.readAsDataURL(file);
   };
@@ -247,6 +234,7 @@ JSON format (use exactly these keys):
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 18, color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
         </div>
 
+        {/* Scrollable content */}
         <div ref={scrollContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {!verdict ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -333,21 +321,10 @@ JSON format (use exactly these keys):
 
               <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                 <IconLightbulb size={14} color={ROSE} />
-                <span><strong>Tip:</strong> Screenshot a TikTok or Instagram ad and upload it — Skyn Karma will read the claims and cross-reference them against skincare science.</span>
+                <span><strong>Tip:</strong> Screenshot a TikTok or Instagram ad and upload it — Skyn Karma will read the claims and cross-reference against skincare science.</span>
               </div>
 
               {error && <div style={{ color: '#ef4444', fontSize: 13 }}>{error}</div>}
-
-              <button onClick={handleCheck} disabled={!canSubmit || loading} style={{
-                padding: '13px', background: canSubmit && !loading ? ROSE : '#e2e8f0',
-                color: canSubmit && !loading ? '#fff' : '#94a3b8',
-                border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600,
-                cursor: canSubmit && !loading ? 'pointer' : 'default',
-                fontFamily: 'inherit', transition: 'all 0.15s ease',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              }}>
-                {loading ? 'Investigating…' : <><IconWarning size={16} color={canSubmit && !loading ? '#fff' : '#94a3b8'} /> Run reality check →</>}
-              </button>
             </div>
 
           ) : (
@@ -446,6 +423,22 @@ JSON format (use exactly these keys):
             </div>
           )}
         </div>
+
+        {/* Sticky action button — input screen only */}
+        {!verdict && (
+          <div style={{ padding: '12px 24px 16px', borderTop: '1px solid #f1f5f9', background: '#fff', flexShrink: 0 }}>
+            <button onClick={handleCheck} disabled={!canSubmit || loading} style={{
+              width: '100%', padding: '14px', background: canSubmit && !loading ? ROSE : '#e2e8f0',
+              color: canSubmit && !loading ? '#fff' : '#94a3b8',
+              border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600,
+              cursor: canSubmit && !loading ? 'pointer' : 'default',
+              fontFamily: 'inherit', transition: 'all 0.15s ease',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}>
+              {loading ? 'Investigating…' : <><IconWarning size={16} color={canSubmit && !loading ? '#fff' : '#94a3b8'} /> Run reality check →</>}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
