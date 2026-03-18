@@ -142,7 +142,6 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
     }
   };
 
-  // Name required — photo is supplementary only
   const filledCount = products.filter(p => p.name.trim()).length;
 
   const severityColor = (s: string) => s === 'high' ? '#ef4444' : s === 'medium' ? '#f59e0b' : '#10b981';
@@ -170,23 +169,23 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
               </div>
               <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#0f172a' }}>Check My Products</h2>
             </div>
-            <p style={{ margin: 0, fontSize: 14, color: '#64748b' }}>Enter product names below — add photos or ingredients for more accuracy</p>
+            <p style={{ margin: 0, fontSize: 14, color: '#64748b' }}>Enter product names — add photos or ingredients for more accuracy</p>
           </div>
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 18, color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
         </div>
 
+        {/* Scrollable content */}
         <div ref={scrollContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {!report ? (
             <div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
                 {products.map((p, i) => (
                   <div key={p.id} style={{ border: '1.5px solid #e2e8f0', borderRadius: 12, overflow: 'hidden' }}>
-                    {/* Product name row — stacked on mobile */}
                     <div style={{ padding: '12px 14px', background: '#fafafa' }}>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
                         <div style={{ width: 26, height: 26, borderRadius: 6, background: ROSE, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
-                        {products.length > 1 && (
-                          <button onClick={() => removeProduct(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#cbd5e1', fontSize: 18, padding: 0, flexShrink: 0, marginLeft: 'auto' }}
+                        {products.length > 2 && (
+                          <button onClick={() => removeProduct(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#cbd5e1', fontSize: 18, padding: 0, marginLeft: 'auto', flexShrink: 0 }}
                             onMouseEnter={e => (e.target as HTMLElement).style.color = '#ef4444'}
                             onMouseLeave={e => (e.target as HTMLElement).style.color = '#cbd5e1'}>×</button>
                         )}
@@ -247,26 +246,17 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
                 onMouseLeave={e => { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.color = '#64748b'; }}
               >+ Add another product</button>
 
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5, marginBottom: 14, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                 <IconLightbulb size={14} />
                 <span><strong>Tip:</strong> Product names are required. Add ingredient lists or photos for more accurate conflict detection.</span>
               </div>
-
-              <button onClick={handleAnalyse} disabled={filledCount < 2 || loading} style={{
-                width: '100%', padding: '14px',
-                background: filledCount >= 2 && !loading ? ROSE : '#e2e8f0',
-                color: filledCount >= 2 && !loading ? '#fff' : '#94a3b8',
-                border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600,
-                cursor: filledCount >= 2 && !loading ? 'pointer' : 'default', fontFamily: 'inherit', transition: 'all 0.15s',
-              }}>
-                {loading ? 'Analysing your products…' : filledCount < 2 ? 'Enter at least 2 product names to analyse' : `Analyse ${filledCount} products →`}
-              </button>
             </div>
           ) : (
             <div ref={resultsTopRef}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0f172a' }}>Your Compatibility Report</h3>
-                <button onClick={() => { setReport(null); setFollowUpAnswer(''); setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50); }} style={{ padding: '6px 12px', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 8, fontSize: 13, color: ROSE, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>← Edit products</button>
+                <button onClick={() => { setReport(null); setFollowUpAnswer(''); setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50); }}
+                  style={{ padding: '6px 12px', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 8, fontSize: 13, color: ROSE, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>← Edit products</button>
               </div>
 
               <div style={{ background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 12, padding: '16px 18px', marginBottom: 20 }}>
@@ -370,6 +360,21 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
             </div>
           )}
         </div>
+
+        {/* Sticky action button — input screen only */}
+        {!report && (
+          <div style={{ padding: '12px 24px 16px', borderTop: '1px solid #f1f5f9', background: '#fff', flexShrink: 0 }}>
+            <button onClick={handleAnalyse} disabled={filledCount < 2 || loading} style={{
+              width: '100%', padding: '14px',
+              background: filledCount >= 2 && !loading ? ROSE : '#e2e8f0',
+              color: filledCount >= 2 && !loading ? '#fff' : '#94a3b8',
+              border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600,
+              cursor: filledCount >= 2 && !loading ? 'pointer' : 'default', fontFamily: 'inherit', transition: 'all 0.15s',
+            }}>
+              {loading ? 'Analysing your products…' : filledCount < 2 ? 'Enter at least 2 product names to analyse' : `Analyse ${filledCount} products →`}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
