@@ -327,7 +327,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
             {isExample && inputMode === 'text' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 13, color: ROSE }}>
                 <IconLightbulb size={13} color={ROSE} />
-                <span>We&apos;ve ppre-filled an example — hit the button to try it, replace with your own, or try the photo upload </span>
+                <span>We&apos;ve pre-filled an example — hit the button to try it, replace with your own, or try the photo upload </span>
               </div>
             )}
             <button onClick={handleDecode} disabled={!canSubmit || loading} style={{
