@@ -19,7 +19,7 @@ const ROSE_LIGHT = '#fdf2f3';
 type View = 'landing' | 'onboarding' | 'dashboard' | 'chat';
 
 const SUGGESTIONS = [
-  'Help me build my first skin routine',
+  'Help me build my skin care routine',
   'Can I use vitamin C and niacinamide together?',
   'What order should I apply my products?',
   'Help me build a morning routine',
