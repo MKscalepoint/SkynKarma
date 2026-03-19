@@ -192,7 +192,7 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
                       </div>
                       <input value={p.name} onChange={e => updateProduct(p.id, 'name', e.target.value)}
                         placeholder="Product name e.g. The Ordinary Niacinamide 10%"
-                        style={{ width: '100%', border: '1.5px solid #e2e8f0', borderRadius: 8, padding: '9px 12px', fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', fontWeight: 500, boxSizing: 'border-box', background: '#fff' }}
+                        style={{ width: '100%', border: '1.5px solid #e2e8f0', borderRadius: 8, padding: '9px 12px', fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', fontWeight: 500, boxSizing: 'border-box', background: '#fff' }}
                         onFocus={e => e.target.style.borderColor = ROSE}
                         onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                       <select value={p.type} onChange={e => updateProduct(p.id, 'type', e.target.value)}

@@ -21,7 +21,7 @@ interface DashboardProps {
 }
 
 const SUGGESTIONS = [
-  'Build me a morning routine',
+  'Help me build my first skin routine',
   'Can I use retinol + vitamin C?',
   'What does niacinamide do?',
   'Is my routine causing breakouts?',

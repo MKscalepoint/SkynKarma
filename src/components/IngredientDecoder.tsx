@@ -223,7 +223,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                 </label>
                 <input value={productName} onChange={e => setProductName(e.target.value)}
                   placeholder="e.g. COSRX Snail 96 Mucin Essence"
-                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
                   onFocus={e => e.target.style.borderColor = ROSE}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
@@ -236,7 +236,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                     </label>
                     <textarea value={ingredients} onChange={e => setIngredients(e.target.value)}
                       placeholder="Paste the full ingredient list here…"
-                      rows={5} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
+                      rows={5} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
                       onFocus={e => e.target.style.borderColor = ROSE}
                       onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                   </div>

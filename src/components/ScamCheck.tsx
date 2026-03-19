@@ -261,7 +261,7 @@ JSON format (use exactly these keys):
                 </label>
                 <input value={productName} onChange={e => setProductName(e.target.value)}
                   placeholder="e.g. GlowLab Pro Stem Cell Regenerating Serum"
-                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
                   onFocus={e => e.target.style.borderColor = ROSE}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
@@ -303,7 +303,7 @@ JSON format (use exactly these keys):
                 </label>
                 <textarea value={brandClaim} onChange={e => setBrandClaim(e.target.value)}
                   placeholder="e.g. 'Reduces wrinkles by 87% in 7 days', 'clinically proven'…"
-                  rows={2} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
+                  rows={2} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
                   onFocus={e => e.target.style.borderColor = ROSE}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
@@ -314,7 +314,7 @@ JSON format (use exactly these keys):
                 </label>
                 <textarea value={ingredients} onChange={e => setIngredients(e.target.value)}
                   placeholder="Paste from packaging, website, or an app like INCI Beauty…"
-                  rows={2} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
+                  rows={2} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
                   onFocus={e => e.target.style.borderColor = ROSE}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
