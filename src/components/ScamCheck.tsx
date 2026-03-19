@@ -7,6 +7,9 @@ const ROSE = '#b5737a';
 const ROSE_LIGHT = '#fdf2f3';
 const ROSE_MID = '#f2d0d3';
 
+const EXAMPLE_PRODUCT = 'GlowUp Pro Stem Cell Regenerating Serum';
+const EXAMPLE_CLAIM = "'Clinically proven to reduce wrinkles by 87% in 7 days using patented stem cell technology. As seen on Dragon's Den. Used by celebrities worldwide.'";
+
 interface ScamCheckProps {
   profile: UserProfile | null;
   onClose: () => void;
@@ -86,8 +89,8 @@ function extractJSON(text: string): Verdict | null {
 }
 
 export default function ScamCheck({ profile, onClose }: ScamCheckProps) {
-  const [productName, setProductName] = useState('');
-  const [brandClaim, setBrandClaim] = useState('');
+  const [productName, setProductName] = useState(EXAMPLE_PRODUCT);
+  const [brandClaim, setBrandClaim] = useState(EXAMPLE_CLAIM);
   const [ingredients, setIngredients] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
   const [photoName, setPhotoName] = useState('');
@@ -98,14 +101,15 @@ export default function ScamCheck({ profile, onClose }: ScamCheckProps) {
   const [followUp, setFollowUp] = useState('');
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [followUpAnswer, setFollowUpAnswer] = useState('');
+  const [isExample, setIsExample] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
-  const resultsTopRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoName(file.name);
+    setIsExample(false);
     const reader = new FileReader();
     reader.onload = async () => {
       const raw = (reader.result as string).split(',')[1];
@@ -199,9 +203,9 @@ JSON format (use exactly these keys):
   };
 
   const reset = () => {
-    setVerdict(null); setProductName(''); setBrandClaim('');
+    setVerdict(null); setProductName(EXAMPLE_PRODUCT); setBrandClaim(EXAMPLE_CLAIM);
     setIngredients(''); setPhoto(null); setPhotoName('');
-    setError(''); setFollowUpAnswer(''); setFollowUp('');
+    setError(''); setFollowUpAnswer(''); setFollowUp(''); setIsExample(true);
     setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
   };
 
@@ -259,7 +263,7 @@ JSON format (use exactly these keys):
                   Product name {inputMode === 'text' && <span style={{ color: '#ef4444' }}>*</span>}
                   {inputMode === 'photo' && <span style={{ color: '#94a3b8', fontWeight: 400 }}> (optional if photo is clear)</span>}
                 </label>
-                <input value={productName} onChange={e => setProductName(e.target.value)}
+                <input value={productName} onChange={e => { setProductName(e.target.value); setIsExample(false); }}
                   placeholder="e.g. GlowLab Pro Stem Cell Regenerating Serum"
                   style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
                   onFocus={e => e.target.style.borderColor = ROSE}
@@ -301,7 +305,7 @@ JSON format (use exactly these keys):
                 <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
                   What does the brand claim? <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional but helps)</span>
                 </label>
-                <textarea value={brandClaim} onChange={e => setBrandClaim(e.target.value)}
+                <textarea value={brandClaim} onChange={e => { setBrandClaim(e.target.value); setIsExample(false); }}
                   placeholder="e.g. 'Reduces wrinkles by 87% in 7 days', 'clinically proven'…"
                   rows={2} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
                   onFocus={e => e.target.style.borderColor = ROSE}
@@ -312,7 +316,7 @@ JSON format (use exactly these keys):
                 <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
                   Ingredient list <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional — makes analysis more accurate)</span>
                 </label>
-                <textarea value={ingredients} onChange={e => setIngredients(e.target.value)}
+                <textarea value={ingredients} onChange={e => { setIngredients(e.target.value); setIsExample(false); }}
                   placeholder="Paste from packaging, website, or an app like INCI Beauty…"
                   rows={2} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
                   onFocus={e => e.target.style.borderColor = ROSE}
@@ -328,7 +332,7 @@ JSON format (use exactly these keys):
             </div>
 
           ) : (
-            <div ref={resultsTopRef}>
+            <div>
               <div style={{ background: vc!.bg, border: `1px solid ${vc!.border}`, borderRadius: 16, padding: '20px', marginBottom: 20, borderLeft: `4px solid ${vc!.color}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -403,7 +407,7 @@ JSON format (use exactly these keys):
                   <input value={followUp} onChange={e => setFollowUp(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleFollowUp()}
                     placeholder="e.g. What would you recommend instead?"
-                    style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0f172a', outline: 'none' }}
+                    style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none' }}
                     onFocus={e => e.target.style.borderColor = ROSE}
                     onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                   <button onClick={handleFollowUp} disabled={!followUp.trim() || followUpLoading} style={{
@@ -424,9 +428,15 @@ JSON format (use exactly these keys):
           )}
         </div>
 
-        {/* Sticky action button — input screen only */}
+        {/* Sticky footer — input screen only */}
         {!verdict && (
-          <div style={{ padding: '12px 24px 16px', borderTop: '1px solid #f1f5f9', background: '#fff', flexShrink: 0 }}>
+          <div style={{ padding: '10px 24px 16px', borderTop: '1px solid #f1f5f9', background: '#fff', flexShrink: 0 }}>
+            {isExample && inputMode === 'text' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 13, color: ROSE }}>
+                <IconLightbulb size={13} color={ROSE} />
+                <span>We&apos;ve pre-filled an example — hit the button to try it, replace with your own, or try the photo upload</span>
+              </div>
+            )}
             <button onClick={handleCheck} disabled={!canSubmit || loading} style={{
               width: '100%', padding: '14px', background: canSubmit && !loading ? ROSE : '#e2e8f0',
               color: canSubmit && !loading ? '#fff' : '#94a3b8',

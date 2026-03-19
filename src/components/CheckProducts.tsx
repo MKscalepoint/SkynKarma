@@ -23,6 +23,11 @@ interface ProductEntryWithPhoto extends ProductEntry {
   photoName?: string;
 }
 
+const EXAMPLE_PRODUCTS: ProductEntryWithPhoto[] = [
+  { id: 'ex1', name: 'The Ordinary Niacinamide 10% + Zinc 1%', type: 'Serum', ingredients: '' },
+  { id: 'ex2', name: 'The Ordinary Vitamin C Suspension 23%', type: 'Serum', ingredients: '' },
+];
+
 const IconShieldCheck = ({ size = 16, color = ROSE }: { size?: number; color?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
@@ -62,29 +67,33 @@ async function compressImage(base64: string): Promise<string> {
 }
 
 export default function CheckProducts({ profile, onClose }: CheckProductsProps) {
-  const [products, setProducts] = useState<ProductEntryWithPhoto[]>([
-    { id: generateId(), name: '', type: 'Serum', ingredients: '' },
-    { id: generateId(), name: '', type: 'Moisturiser', ingredients: '' },
-  ]);
+  const [products, setProducts] = useState<ProductEntryWithPhoto[]>(EXAMPLE_PRODUCTS);
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [showIngredients, setShowIngredients] = useState<Record<string, boolean>>({});
   const [followUp, setFollowUp] = useState('');
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [followUpAnswer, setFollowUpAnswer] = useState('');
+  const [isExample, setIsExample] = useState(true);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const resultsTopRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const addProduct = () => setProducts(prev => [...prev, { id: generateId(), name: '', type: 'Serum', ingredients: '' }]);
+  const addProduct = () => {
+    setIsExample(false);
+    setProducts(prev => [...prev, { id: generateId(), name: '', type: 'Serum', ingredients: '' }]);
+  };
+
   const removeProduct = (id: string) => setProducts(prev => prev.filter(p => p.id !== id));
+
   const updateProduct = (id: string, field: keyof ProductEntryWithPhoto, value: string) => {
+    setIsExample(false);
     setProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
   };
 
   const handlePhotoSelect = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setIsExample(false);
     const reader = new FileReader();
     reader.onload = async () => {
       const raw = (reader.result as string).split(',')[1];
@@ -228,7 +237,7 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
                       <div style={{ borderTop: '1px solid #f1f5f9', padding: '10px 14px' }}>
                         <textarea value={p.ingredients} onChange={e => updateProduct(p.id, 'ingredients', e.target.value)}
                           placeholder="Paste ingredient list (optional — improves accuracy)"
-                          rows={3} style={{ width: '100%', border: '1px solid #e2e8f0', borderRadius: 8, padding: '8px 10px', fontSize: 13, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }}
+                          rows={3} style={{ width: '100%', border: '1px solid #e2e8f0', borderRadius: 8, padding: '8px 10px', fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }}
                           onFocus={e => e.target.style.borderColor = ROSE}
                           onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                       </div>
@@ -252,7 +261,7 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
               </div>
             </div>
           ) : (
-            <div ref={resultsTopRef}>
+            <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0f172a' }}>Your Compatibility Report</h3>
                 <button onClick={() => { setReport(null); setFollowUpAnswer(''); setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50); }}
@@ -344,7 +353,7 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
                   <input value={followUp} onChange={e => setFollowUp(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleFollowUp()}
                     placeholder="e.g. Can I use these in the same routine?"
-                    style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0f172a', outline: 'none' }}
+                    style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none' }}
                     onFocus={e => e.target.style.borderColor = ROSE}
                     onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                   <button onClick={handleFollowUp} disabled={!followUp.trim() || followUpLoading} style={{
@@ -361,9 +370,15 @@ export default function CheckProducts({ profile, onClose }: CheckProductsProps) 
           )}
         </div>
 
-        {/* Sticky action button — input screen only */}
+        {/* Sticky footer — input screen only */}
         {!report && (
-          <div style={{ padding: '12px 24px 16px', borderTop: '1px solid #f1f5f9', background: '#fff', flexShrink: 0 }}>
+          <div style={{ padding: '10px 24px 16px', borderTop: '1px solid #f1f5f9', background: '#fff', flexShrink: 0 }}>
+            {isExample && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 13, color: ROSE }}>
+                <IconLightbulb size={13} color={ROSE} />
+                <span>We&apos;ve pre-filled an example — hit the button to try it, replace with your own, or try the photo upload</span>
+              </div>
+            )}
             <button onClick={handleAnalyse} disabled={filledCount < 2 || loading} style={{
               width: '100%', padding: '14px',
               background: filledCount >= 2 && !loading ? ROSE : '#e2e8f0',

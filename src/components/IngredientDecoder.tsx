@@ -7,6 +7,9 @@ const ROSE = '#b5737a';
 const ROSE_LIGHT = '#fdf2f3';
 const ROSE_MID = '#f2d0d3';
 
+const EXAMPLE_PRODUCT = 'The Ordinary Niacinamide 10% + Zinc 1%';
+const EXAMPLE_INGREDIENTS = 'Aqua (Water), Niacinamide, Pentylene Glycol, Zinc PCA, Dimethyl Isosorbide, Tamarindus Indica Seed Gum, Xanthan Gum, Isoceteth-20, Ethoxydiglycol, Phenoxyethanol, Chlorphenesin';
+
 interface IngredientDecoderProps {
   profile: UserProfile | null;
   onClose: () => void;
@@ -63,8 +66,8 @@ async function compressImage(base64: string): Promise<string> {
 }
 
 export default function IngredientDecoder({ profile, onClose }: IngredientDecoderProps) {
-  const [productName, setProductName] = useState('');
-  const [ingredients, setIngredients] = useState('');
+  const [productName, setProductName] = useState(EXAMPLE_PRODUCT);
+  const [ingredients, setIngredients] = useState(EXAMPLE_INGREDIENTS);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DecoderResult | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
@@ -73,19 +76,19 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
   const [followUp, setFollowUp] = useState('');
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [followUpAnswer, setFollowUpAnswer] = useState('');
+  const [isExample, setIsExample] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
-  const resultsTopRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoName(file.name);
+    setIsExample(false);
     const reader = new FileReader();
     reader.onload = async () => {
       const raw = (reader.result as string).split(',')[1];
-      const compressed = await compressImage(raw);
-      setPhoto(compressed);
+      setPhoto(await compressImage(raw));
     };
     reader.readAsDataURL(file);
   };
@@ -160,8 +163,9 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
   };
 
   const resetForm = () => {
-    setResult(null); setIngredients(''); setProductName('');
+    setResult(null); setIngredients(EXAMPLE_INGREDIENTS); setProductName(EXAMPLE_PRODUCT);
     setPhoto(null); setPhotoName(''); setFollowUpAnswer(''); setFollowUp('');
+    setIsExample(true);
     setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
   };
 
@@ -221,7 +225,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                 <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
                   Product name <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
                 </label>
-                <input value={productName} onChange={e => setProductName(e.target.value)}
+                <input value={productName} onChange={e => { setProductName(e.target.value); setIsExample(false); }}
                   placeholder="e.g. COSRX Snail 96 Mucin Essence"
                   style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
                   onFocus={e => e.target.style.borderColor = ROSE}
@@ -234,7 +238,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                     <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
                       Ingredient list <span style={{ color: '#ef4444' }}>*</span>
                     </label>
-                    <textarea value={ingredients} onChange={e => setIngredients(e.target.value)}
+                    <textarea value={ingredients} onChange={e => { setIngredients(e.target.value); setIsExample(false); }}
                       placeholder="Paste the full ingredient list here…"
                       rows={5} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
                       onFocus={e => e.target.style.borderColor = ROSE}
@@ -281,7 +285,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
               )}
             </div>
           ) : (
-            <div ref={resultsTopRef}>
+            <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                 <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#0f172a' }}>{result.productName}</h3>
                 <button onClick={resetForm} style={{ padding: '6px 12px', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 8, fontSize: 13, color: ROSE, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>Decode another</button>
@@ -300,7 +304,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                   <input value={followUp} onChange={e => setFollowUp(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleFollowUp()}
                     placeholder="e.g. Is this safe for sensitive skin?"
-                    style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0f172a', outline: 'none' }}
+                    style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none' }}
                     onFocus={e => e.target.style.borderColor = ROSE}
                     onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                   <button onClick={handleFollowUp} disabled={!followUp.trim() || followUpLoading} style={{
@@ -317,9 +321,15 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
           )}
         </div>
 
-        {/* Sticky action button — input screen only */}
+        {/* Sticky footer — input screen only */}
         {!result && (
-          <div style={{ padding: '12px 24px 16px', borderTop: '1px solid #f1f5f9', background: '#fff', flexShrink: 0 }}>
+          <div style={{ padding: '10px 24px 16px', borderTop: '1px solid #f1f5f9', background: '#fff', flexShrink: 0 }}>
+            {isExample && inputMode === 'text' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 13, color: ROSE }}>
+                <IconLightbulb size={13} color={ROSE} />
+                <span>We&apos;ve ppre-filled an example — hit the button to try it, replace with your own, or try the photo upload </span>
+              </div>
+            )}
             <button onClick={handleDecode} disabled={!canSubmit || loading} style={{
               width: '100%', padding: '14px', background: canSubmit && !loading ? ROSE : '#e2e8f0',
               color: canSubmit && !loading ? '#fff' : '#94a3b8',
