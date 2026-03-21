@@ -35,18 +35,38 @@ const FAQS = [
 function CookieBanner() {
   const [visible, setVisible] = useState(true);
   if (!visible) return null;
+
+  const handleAccept = () => {
+    setVisible(false);
+
+    // Load GA4 only after consent
+    const script1 = document.createElement('script');
+    script1.async = true;
+    script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-D2BGV4H6G4';
+    document.head.appendChild(script1);
+
+    const script2 = document.createElement('script');
+    script2.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-D2BGV4H6G4');
+    `;
+    document.head.appendChild(script2);
+  };
+
   return (
-   <div style={{
+    <div style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 999,
       background: '#0f172a', padding: '12px 20px',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       gap: 12, flexWrap: 'wrap',
     }}>
-      <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
-        We use cookies to keep you logged in. No tracking, no ads.{' '}
+      <p className="cookie-banner-text" style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
+        We use cookies to keep you logged in and understand how the app is used. No ads, no selling your data.{' '}
         <a href="#" style={{ color: ROSE, textDecoration: 'none' }}>Learn more</a>
       </p>
-      <button onClick={() => setVisible(false)} style={{
+      <button className="cookie-banner-btn" onClick={handleAccept} style={{
         background: ROSE, border: 'none', borderRadius: 8,
         padding: '7px 18px', color: '#fff', fontSize: 13,
         fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0,
