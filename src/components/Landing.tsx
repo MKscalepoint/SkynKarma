@@ -33,11 +33,16 @@ const FAQS = [
   },
 ];
 function CookieBanner() {
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('cookie_consent') !== 'true';
+  });
+
   if (!visible) return null;
 
   const handleAccept = () => {
     setVisible(false);
+    localStorage.setItem('cookie_consent', 'true');
 
     // Load GA4 only after consent
     const script1 = document.createElement('script');
