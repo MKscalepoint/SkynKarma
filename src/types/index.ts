@@ -9,6 +9,7 @@ export interface UserProfile {
   experience?: string;
   age?: string;
   sensitivities?: string;
+  country?: string;
   completed: boolean;
 }
 
@@ -54,6 +55,27 @@ export interface AnalysisReport {
   pmRoutine: string[];
 }
 
+export interface PriceResult {
+  retailer: string;
+  price: string;
+  currency: string;
+  url: string;
+  inStock: boolean;
+  note?: string;
+}
+
+export interface SavedProduct {
+  id: string;
+  name: string;
+  brand?: string;
+  savedAt: string;
+  source: 'manual' | 'reality-check' | 'check-products' | 'ingredient-decoder' | 'chat';
+  lastPriceSearch?: {
+    searchedAt: string;
+    results: PriceResult[];
+  };
+}
+
 export const ONBOARDING_QUESTIONS: OnboardingQuestion[] = [
   {
     id: 'skinType',
@@ -93,5 +115,13 @@ export const ONBOARDING_QUESTIONS: OnboardingQuestion[] = [
     subtitle: "We'll flag any products or ingredients that could be a problem for you.",
     type: 'text',
     field: 'sensitivities',
+  },
+  {
+    id: 'country',
+    question: "Where are you based?",
+    subtitle: "We'll find the best prices from retailers that ship to you.",
+    type: 'single',
+    field: 'country',
+    options: ['United Kingdom', 'United States', 'Australia', 'Canada', 'Europe', 'Other']
   }
 ];

@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Message, UserProfile, RoutineProduct, ChatSession } from '@/types';
+import { Message, UserProfile, RoutineProduct, ChatSession, SavedProduct } from '@/types';
 import {
   getSessions, saveSession, deleteSession, getRoutine, saveRoutine,
-  getProfile, saveProfile, clearAll, generateId, setActiveSessionId, getActiveSessionId
+  getProfile, saveProfile, clearAll, generateId, setActiveSessionId, getActiveSessionId,
+  getSavedProducts, saveSavedProducts,
 } from '@/lib/storage';
 import Landing from '@/components/Landing';
 import Onboarding from '@/components/Onboarding';
 import Dashboard from '@/components/Dashboard';
+import SavedProducts from '@/components/SavedProducts';
 import IngredientDecoder from '@/components/IngredientDecoder';
 import CheckProducts from '@/components/CheckProducts';
 import ScamCheck from '@/components/ScamCheck';
@@ -16,7 +18,7 @@ import ScamCheck from '@/components/ScamCheck';
 const ROSE = '#b5737a';
 const ROSE_LIGHT = '#fdf2f3';
 
-type View = 'landing' | 'onboarding' | 'dashboard' | 'chat';
+type View = 'landing' | 'onboarding' | 'dashboard' | 'chat' | 'saved';
 
 const SUGGESTIONS = [
   'Help me build my skin care routine',
@@ -64,7 +66,7 @@ function AppFooter() {
   );
 }
 
-type NavTab = 'home' | 'chat' | 'tools' | 'routine' | 'profile';
+type NavTab = 'home' | 'chat' | 'tools' | 'saved' | 'profile';
 
 export default function App() {
   const [view, setView] = useState<View>('landing');
@@ -76,6 +78,7 @@ export default function App() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveId] = useState<string | null>(null);
   const [routine, setRoutine] = useState<RoutineProduct[]>([]);
+  const [savedProducts, setSavedProducts] = useState<SavedProduct[]>([]);
   const [showSessions, setShowSessions] = useState(false);
   const [showStartOverConfirm, setShowStartOverConfirm] = useState(false);
   const [showIngredients, setShowIngredients] = useState(false);
@@ -94,8 +97,10 @@ export default function App() {
     const savedRoutine = getRoutine();
     const savedSessions = getSessions();
     const savedActiveId = getActiveSessionId();
+    const saved = getSavedProducts();
     setRoutine(savedRoutine);
     setSessions(savedSessions);
+    setSavedProducts(saved);
     if (savedProfile?.completed) {
       setProfile(savedProfile);
       if (savedActiveId && savedSessions.find(s => s.id === savedActiveId)) {
@@ -126,7 +131,6 @@ export default function App() {
     }
   }, [messages, loading]);
 
-  // Start a new chat session — works with or without a profile
   const startNewSession = useCallback((p: UserProfile | null, initialMessage?: string) => {
     const id = generateId();
     const welcomeText = p ? WELCOME_WITH_PROFILE : WELCOME_NO_PROFILE;
@@ -147,11 +151,10 @@ export default function App() {
     }
   }, []);
 
-  // Go straight to dashboard — skip onboarding
   const goToDashboard = useCallback(() => {
     setView('dashboard');
     setActiveTab('home');
-    // If no session exists yet, create a stub so chat is available
+    setSavedProducts(getSavedProducts());
     if (!activeSessionId) {
       const id = generateId();
       const welcome: Message = { role: 'assistant', content: profile ? WELCOME_WITH_PROFILE : WELCOME_NO_PROFILE };
@@ -193,7 +196,6 @@ export default function App() {
     setProfile(p);
     saveProfile(p);
     setEditingProfile(false);
-    // Update welcome message in current session if it exists
     if (activeSessionId) {
       const updatedWelcome: Message = { role: 'assistant', content: WELCOME_WITH_PROFILE };
       setMessages([updatedWelcome]);
@@ -214,7 +216,6 @@ export default function App() {
   const sendMessage = async (text?: string) => {
     const userText = text || input.trim();
     if (!userText || loading) return;
-    // If no session, create one first
     if (!activeSessionId) { startNewSession(profile); return; }
     setInput('');
     const newMessages: Message[] = [...messages, { role: 'user', content: userText }];
@@ -257,11 +258,16 @@ export default function App() {
   const handleResetAll = () => {
     clearAll();
     setProfile(null); setMessages([]); setSessions([]); setRoutine([]);
-    setActiveId(null);
+    setSavedProducts([]); setActiveId(null);
     setView('landing');
   };
 
   const handleRoutineUpdate = (r: RoutineProduct[]) => { setRoutine(r); saveRoutine(r); };
+
+  const handleSavedProductsChange = (products: SavedProduct[]) => {
+    setSavedProducts(products);
+    saveSavedProducts(products);
+  };
 
   const handleKey = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
@@ -276,7 +282,7 @@ export default function App() {
     if (tab === 'home') { setView('dashboard'); setShowToolsMenu(false); }
     else if (tab === 'chat') { setView('chat'); setShowToolsMenu(false); }
     else if (tab === 'tools') { setShowToolsMenu(s => !s); }
-    else if (tab === 'routine') { setView('dashboard'); setShowToolsMenu(false); setTimeout(() => scrollToRoutineRef.current?.(), 50); }
+    else if (tab === 'saved') { setView('saved'); setShowToolsMenu(false);setSavedProducts(getSavedProducts()); }
     else if (tab === 'profile') { setEditingProfile(true); setShowToolsMenu(false); }
   };
 
@@ -305,16 +311,17 @@ export default function App() {
     return (
       <Onboarding
         onComplete={handleProfileComplete}
-        onHome={() => { setEditingProfile(false); setView(view === 'dashboard' || view === 'chat' ? view : 'landing'); }}
+        onHome={() => { setEditingProfile(false); setView(view === 'dashboard' || view === 'chat' || view === 'saved' ? view : 'landing'); }}
         initialProfile={editingProfile ? profile : null}
         editMode={editingProfile}
       />
     );
   }
 
-  // ── Dashboard + Chat ──────────────────────────────────────────
+  // ── Dashboard + Chat + Saved ──────────────────────────────────
   const isDashboard = view === 'dashboard';
   const isChat = view === 'chat';
+  const isSaved = view === 'saved';
   const anyToolOpen = showIngredients || showCheckProducts || showScamCheck;
 
   return (
@@ -333,7 +340,9 @@ export default function App() {
             <div style={{ width: 30, height: 30, borderRadius: 8, background: ROSE, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700 }}>SK</div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', lineHeight: 1.2, textAlign: 'left' }}>Skyn Karma</div>
-              <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1 }}>{isChat ? 'Skin Advisor' : 'Dashboard'}</div>
+              <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1 }}>
+                {isChat ? 'Skin Advisor' : isSaved ? 'Saved Products' : 'Dashboard'}
+              </div>
             </div>
           </button>
         </div>
@@ -367,11 +376,11 @@ export default function App() {
               )}
             </div>
 
-            <button onClick={() => { setView('dashboard'); setActiveTab('home'); setTimeout(() => scrollToRoutineRef.current?.(), 50); }} style={{ padding: '6px 12px', background: 'transparent', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 5 }}
-              onMouseEnter={e => { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.color = ROSE; }}
-              onMouseLeave={e => { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.color = '#64748b'; }}>
-              My Routine
-              {routine.length > 0 && <span style={{ background: ROSE, color: '#fff', borderRadius: 10, padding: '1px 6px', fontSize: 11, fontWeight: 700 }}>{routine.length}</span>}
+            <button onClick={() => { setView('saved'); setActiveTab('saved'); }} style={{ padding: '6px 12px', background: isSaved ? ROSE : 'transparent', border: `1px solid ${isSaved ? ROSE : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, color: isSaved ? '#fff' : '#64748b', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 5 }}
+              onMouseEnter={e => { if (!isSaved) { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.color = ROSE; } }}
+              onMouseLeave={e => { if (!isSaved) { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.color = '#64748b'; } }}>
+              Saved
+              {savedProducts.length > 0 && <span style={{ background: isSaved ? 'rgba(255,255,255,0.3)' : ROSE, color: '#fff', borderRadius: 10, padding: '1px 6px', fontSize: 11, fontWeight: 700 }}>{savedProducts.length}</span>}
             </button>
 
             <button onClick={() => setEditingProfile(true)} style={{ padding: '6px 12px', background: 'transparent', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}
@@ -448,6 +457,15 @@ export default function App() {
           />
         )}
 
+        {/* Saved Products */}
+        {isSaved && (
+          <SavedProducts
+            products={savedProducts}
+            country={profile?.country}
+            onProductsChange={handleSavedProductsChange}
+          />
+        )}
+
         {/* Chat */}
         {isChat && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
@@ -461,7 +479,6 @@ export default function App() {
               </div>
             )}
 
-            {/* No profile nudge */}
             {!profile && (
               <div style={{ background: ROSE_LIGHT, borderBottom: `1px solid ${ROSE_LIGHT}`, padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
                 <span style={{ fontSize: 13, color: '#7c3f44' }}>Set up your skin profile for personalised advice</span>
@@ -558,21 +575,24 @@ export default function App() {
           { tab: 'home' as NavTab, label: 'Home', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
           { tab: 'chat' as NavTab, label: 'Chat', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
           { tab: 'tools' as NavTab, label: 'Tools', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/></svg> },
-          { tab: 'routine' as NavTab, label: 'Routine', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> },
+          { tab: 'saved' as NavTab, label: 'Saved', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> },
           { tab: 'profile' as NavTab, label: 'Profile', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
         ]).map(({ tab, label, icon }) => {
           const isActive = (
             (tab === 'home' && isDashboard && !anyToolOpen && !showToolsMenu) ||
             (tab === 'chat' && isChat) ||
             (tab === 'tools' && (anyToolOpen || showToolsMenu)) ||
-            (tab === 'routine' && isDashboard && !anyToolOpen && !showToolsMenu) ||
+            (tab === 'saved' && isSaved) ||
             (tab === 'profile' && editingProfile)
           );
           return (
-            <button key={tab} onClick={() => handleTabChange(tab)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '10px 4px', border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', color: isActive ? ROSE : '#94a3b8' }}>
+            <button key={tab} onClick={() => handleTabChange(tab)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '10px 4px', border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', color: isActive ? ROSE : '#94a3b8', position: 'relative' }}>
               {icon}
               <span style={{ fontSize: 10, fontWeight: isActive ? 700 : 500 }}>{label}</span>
               {isActive && <div style={{ width: 4, height: 4, borderRadius: 2, background: ROSE, marginTop: 1 }} />}
+              {tab === 'saved' && savedProducts.length > 0 && !isActive && (
+                <div style={{ position: 'absolute', top: 8, right: '50%', transform: 'translateX(8px)', width: 8, height: 8, borderRadius: '50%', background: ROSE }} />
+              )}
             </button>
           );
         })}
@@ -580,10 +600,9 @@ export default function App() {
 
       <AppFooter />
 
-      {showIngredients && <IngredientDecoder profile={profile} onClose={() => setShowIngredients(false)} />}
-      {showCheckProducts && <CheckProducts profile={profile} onClose={() => setShowCheckProducts(false)} />}
-      {showScamCheck && <ScamCheck profile={profile} onClose={() => setShowScamCheck(false)} />}
-
+      {showIngredients && <IngredientDecoder profile={profile} onClose={() => { setShowIngredients(false); setSavedProducts(getSavedProducts()); }} />}
+      {showCheckProducts && <CheckProducts profile={profile} onClose={() => { setShowCheckProducts(false); setSavedProducts(getSavedProducts()); }} />}
+      {showScamCheck && <ScamCheck profile={profile} onClose={() => { setShowScamCheck(false); setSavedProducts(getSavedProducts()); }} />}
       <style>{`
         @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
         * { box-sizing: border-box; }

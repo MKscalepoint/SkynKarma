@@ -1,10 +1,11 @@
-import { ChatSession, RoutineProduct, UserProfile } from '@/types';
+import { ChatSession, RoutineProduct, UserProfile, SavedProduct } from '@/types';
 
 const KEYS = {
   SESSIONS: 'skynkarma_sessions',
   ROUTINE: 'skynkarma_routine',
   PROFILE: 'skynkarma_profile',
   ACTIVE_SESSION: 'skynkarma_active_session',
+  SAVED_PRODUCTS: 'skynkarma_saved_products',
 };
 
 export function getSessions(): ChatSession[] {
@@ -54,6 +55,40 @@ export function getProfile(): UserProfile | null {
 
 export function saveProfile(profile: UserProfile): void {
   localStorage.setItem(KEYS.PROFILE, JSON.stringify(profile));
+}
+
+export function getSavedProducts(): SavedProduct[] {
+  if (typeof window === 'undefined') return [];
+  try { return JSON.parse(localStorage.getItem(KEYS.SAVED_PRODUCTS) || '[]'); }
+  catch { return []; }
+}
+
+export function saveSavedProducts(products: SavedProduct[]): void {
+  localStorage.setItem(KEYS.SAVED_PRODUCTS, JSON.stringify(products));
+}
+
+export function addSavedProduct(product: Omit<SavedProduct, 'id' | 'savedAt'>): SavedProduct {
+  const products = getSavedProducts();
+  const newProduct: SavedProduct = {
+    ...product,
+    id: generateId(),
+    savedAt: new Date().toISOString(),
+  };
+  // Avoid duplicates by name
+  const exists = products.some(p => p.name.toLowerCase() === newProduct.name.toLowerCase());
+  if (!exists) {
+    products.unshift(newProduct);
+    saveSavedProducts(products);
+  }
+  return newProduct;
+}
+
+export function removeSavedProduct(id: string): void {
+  saveSavedProducts(getSavedProducts().filter(p => p.id !== id));
+}
+
+export function updateSavedProduct(id: string, updates: Partial<SavedProduct>): void {
+  saveSavedProducts(getSavedProducts().map(p => p.id === id ? { ...p, ...updates } : p));
 }
 
 export function clearAll(): void {

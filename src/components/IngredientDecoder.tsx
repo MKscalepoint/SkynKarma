@@ -2,13 +2,14 @@
 
 import { useState, useRef } from 'react';
 import { UserProfile } from '@/types';
+import { addSavedProduct, getSavedProducts } from '@/lib/storage';
 
 const ROSE = '#b5737a';
 const ROSE_LIGHT = '#fdf2f3';
 const ROSE_MID = '#f2d0d3';
 
 const EXAMPLE_PRODUCT = 'The Ordinary Niacinamide 10% + Zinc 1%';
-const EXAMPLE_INGREDIENTS = 'Aqua (Water), Niacinamide, Pentylene Glycol, Zinc PCA, Dimethyl Isosorbide, Tamarindus Indica Seed Gum, Xanthan Gum, Isoceteth-20, Ethoxydiglycol, Phenoxyethanol, Chlorphenesin';
+const EXAMPLE_INGREDIENTS = 'Aqua (Water), Niacinamide, Pentylene Glycol, Zinc PCA, Dimethyl Isosorbide, Tamarindus Indica Seed Gum, Xanthan gum, Isoceteth-20, Ethoxydiglycol, Phenoxyethanol, Chlorphenesin';
 
 interface IngredientDecoderProps {
   profile: UserProfile | null;
@@ -48,6 +49,34 @@ const IconLightbulb = ({ size = 14, color = ROSE }: { size?: number; color?: str
   </svg>
 );
 
+function SaveButton({ productName }: { productName: string }) {
+  const already = getSavedProducts().some(p => p.name.toLowerCase() === productName.toLowerCase());
+  const [saved, setSaved] = useState(already);
+  const handleSave = () => {
+    if (saved) return;
+    addSavedProduct({ name: productName, source: 'ingredient-decoder' });
+    setSaved(true);
+  };
+  return (
+    <button onClick={handleSave} style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      padding: '8px 14px',
+      background: saved ? '#f0fdf4' : ROSE_LIGHT,
+      border: `1px solid ${saved ? '#bbf7d0' : ROSE_MID}`,
+      borderRadius: 8, cursor: saved ? 'default' : 'pointer',
+      fontSize: 13, fontWeight: 600,
+      color: saved ? '#10b981' : ROSE,
+      fontFamily: 'inherit', transition: 'all 0.15s',
+    }}>
+      {saved ? (
+        <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Saved</>
+      ) : (
+        <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={ROSE} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Save product</>
+      )}
+    </button>
+  );
+}
+
 async function compressImage(base64: string): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -84,11 +113,11 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoName(file.name);
-    setIsExample(false);
     const reader = new FileReader();
     reader.onload = async () => {
       const raw = (reader.result as string).split(',')[1];
       setPhoto(await compressImage(raw));
+      setIsExample(false);
     };
     reader.readAsDataURL(file);
   };
@@ -99,35 +128,22 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
     setLoading(true);
     setResult(null);
     setFollowUpAnswer('');
-
     const profileContext = profile
       ? `User has ${profile.skinType} skin, concerns: ${profile.concerns?.join(', ')}, sensitivities: ${profile.sensitivities || 'none'}.`
       : '';
-
     try {
       let messages;
       if (inputMode === 'photo' && photo) {
-        messages = [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: photo } },
-            { type: 'text', text: `You are Skyn Karma, an expert skincare advisor. The user has uploaded a photo of a product ingredient list.\n\n${profileContext}\nProduct: ${productName || 'Unknown product'}\n\nFirst extract the ingredient list from the image, then provide a structured analysis:\n1. **Key active ingredients** — what they do\n2. **Ingredients to note** — issues for this skin type/sensitivities\n3. **Best for** — skin types and concerns\n4. **Overall verdict** — well-formulated?\n5. **Compatibility tip** — layering advice\n\nIf the image is unclear, say so. Bold key ingredient names.` }
-          ]
-        }];
+        messages = [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: photo } },
+          { type: 'text', text: `You are Skyn Karma, an expert skincare advisor.\n\n${profileContext}\nProduct: ${productName || 'Unknown'}\n\nExtract the ingredient list from the image then analyse:\n1. **Key active ingredients** — what they do\n2. **Ingredients to note** — issues for this skin type\n3. **Best for** — skin types and concerns\n4. **Overall verdict** — well-formulated?\n5. **Compatibility tip** — layering advice\n\nBold key ingredient names.` }
+        ]}];
       } else {
-        messages = [{
-          role: 'user',
-          content: `You are Skyn Karma, an expert skincare advisor.\n\n${profileContext}\nProduct: ${productName || 'Unknown product'}\nIngredients: ${ingredients}\n\nProvide a structured analysis:\n1. **Key active ingredients** — what they do\n2. **Ingredients to note** — issues for this skin type/sensitivities\n3. **Best for** — skin types and concerns\n4. **Overall verdict** — well-formulated?\n5. **Compatibility tip** — layering advice\n\nBe honest, specific, practical. Bold key ingredient names.`
-        }];
+        messages = [{ role: 'user', content: `You are Skyn Karma, an expert skincare advisor.\n\n${profileContext}\nProduct: ${productName || 'Unknown'}\nIngredients: ${ingredients}\n\nAnalyse:\n1. **Key active ingredients** — what they do\n2. **Ingredients to note** — issues for this skin type\n3. **Best for** — skin types and concerns\n4. **Overall verdict** — well-formulated?\n5. **Compatibility tip** — layering advice\n\nBe honest, specific, practical. Bold key ingredient names.` }];
       }
-
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, profile }),
-      });
+      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages, profile }) });
       const data = await res.json();
-      const text = data.content?.find((b: { type: string }) => b.type === 'text')?.text || 'Unable to analyse ingredients.';
+      const text = data.content?.find((b: { type: string }) => b.type === 'text')?.text || 'Unable to analyse.';
       setResult({ productName: productName || 'Your product', analysis: text });
       setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
     } catch {
@@ -146,26 +162,17 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
         { role: 'assistant', content: result.analysis },
         { role: 'user', content: followUp },
       ];
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, profile }),
-      });
+      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages, profile }) });
       const data = await res.json();
-      const text = data.content?.find((b: { type: string }) => b.type === 'text')?.text || 'Sorry, something went wrong.';
-      setFollowUpAnswer(text);
+      setFollowUpAnswer(data.content?.find((b: { type: string }) => b.type === 'text')?.text || 'Sorry, something went wrong.');
       setFollowUp('');
-    } catch {
-      setFollowUpAnswer('Something went wrong. Please try again.');
-    } finally {
-      setFollowUpLoading(false);
-    }
+    } catch { setFollowUpAnswer('Something went wrong.'); }
+    finally { setFollowUpLoading(false); }
   };
 
   const resetForm = () => {
     setResult(null); setIngredients(EXAMPLE_INGREDIENTS); setProductName(EXAMPLE_PRODUCT);
-    setPhoto(null); setPhotoName(''); setFollowUpAnswer(''); setFollowUp('');
-    setIsExample(true);
+    setPhoto(null); setPhotoName(''); setFollowUpAnswer(''); setFollowUp(''); setIsExample(true);
     setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
   };
 
@@ -185,13 +192,10 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '24px 24px 90px', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
       <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 620, maxHeight: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
 
-        {/* Header */}
         <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <IconFlask size={16} />
-              </div>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconFlask size={16} /></div>
               <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#0f172a' }}>Ingredient Decoder</h2>
             </div>
             <p style={{ margin: 0, fontSize: 14, color: '#64748b' }}>Paste an ingredient list or photograph the packaging</p>
@@ -199,72 +203,40 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 18, color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
         </div>
 
-        {/* Scrollable content */}
         <div ref={scrollContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {!result ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 10, padding: 4, gap: 4 }}>
                 {(['text', 'photo'] as const).map(mode => (
-                  <button key={mode} onClick={() => setInputMode(mode)} style={{
-                    flex: 1, padding: '8px', border: 'none', borderRadius: 8,
-                    background: inputMode === mode ? '#fff' : 'transparent',
-                    color: inputMode === mode ? '#0f172a' : '#64748b',
-                    fontWeight: inputMode === mode ? 600 : 400,
-                    fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
-                    boxShadow: inputMode === mode ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-                    transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  }}>
-                    {mode === 'text'
-                      ? <><IconClipboard size={14} color={inputMode === mode ? '#0f172a' : '#94a3b8'} /> Paste text</>
-                      : <><IconCamera size={14} color={inputMode === mode ? '#0f172a' : '#94a3b8'} /> Upload photo</>}
+                  <button key={mode} onClick={() => setInputMode(mode)} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: 8, background: inputMode === mode ? '#fff' : 'transparent', color: inputMode === mode ? '#0f172a' : '#64748b', fontWeight: inputMode === mode ? 600 : 400, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', boxShadow: inputMode === mode ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    {mode === 'text' ? <><IconClipboard size={14} color={inputMode === mode ? '#0f172a' : '#94a3b8'} /> Paste text</> : <><IconCamera size={14} color={inputMode === mode ? '#0f172a' : '#94a3b8'} /> Upload photo</>}
                   </button>
                 ))}
               </div>
 
               <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
-                  Product name <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
-                </label>
-                <input value={productName} onChange={e => { setProductName(e.target.value); setIsExample(false); }}
-                  placeholder="e.g. COSRX Snail 96 Mucin Essence"
-                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
-                  onFocus={e => e.target.style.borderColor = ROSE}
-                  onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Product name <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span></label>
+                <input value={productName} onChange={e => { setProductName(e.target.value); setIsExample(false); }} placeholder="e.g. COSRX Snail 96 Mucin Essence" style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }} onFocus={e => e.target.style.borderColor = ROSE} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
 
               {inputMode === 'text' && (
                 <>
                   <div>
-                    <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
-                      Ingredient list <span style={{ color: '#ef4444' }}>*</span>
-                    </label>
-                    <textarea value={ingredients} onChange={e => { setIngredients(e.target.value); setIsExample(false); }}
-                      placeholder="Paste the full ingredient list here…"
-                      rows={5} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
-                      onFocus={e => e.target.style.borderColor = ROSE}
-                      onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                    <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Ingredient list <span style={{ color: '#ef4444' }}>*</span></label>
+                    <textarea value={ingredients} onChange={e => { setIngredients(e.target.value); setIsExample(false); }} placeholder="Paste the full ingredient list here…" rows={5} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }} onFocus={e => e.target.style.borderColor = ROSE} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                   </div>
                   <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                    <IconLightbulb size={14} />
-                    <span><strong>Tip:</strong> Find ingredient lists on brand websites, packaging, or apps like INCI Beauty or CosDNA.</span>
+                    <IconLightbulb size={14} /><span><strong>Tip:</strong> Find ingredient lists on brand websites, packaging, or apps like INCI Beauty or CosDNA.</span>
                   </div>
                 </>
               )}
 
               {inputMode === 'photo' && (
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
-                    Photo of ingredient list <span style={{ color: '#ef4444' }}>*</span>
-                  </label>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Photo of ingredient list <span style={{ color: '#ef4444' }}>*</span></label>
                   <input ref={fileRef} type="file" accept="image/*" onChange={handlePhotoSelect} style={{ display: 'none' }} />
                   {!photo ? (
-                    <button onClick={() => fileRef.current?.click()} style={{
-                      width: '100%', padding: '28px 20px', border: '2px dashed #e2e8f0', borderRadius: 12,
-                      background: '#fafafa', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, fontFamily: 'inherit',
-                    }}
-                      onMouseEnter={e => { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.background = ROSE_LIGHT; }}
-                      onMouseLeave={e => { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.background = '#fafafa'; }}
-                    >
+                    <button onClick={() => fileRef.current?.click()} style={{ width: '100%', padding: '28px 20px', border: '2px dashed #e2e8f0', borderRadius: 12, background: '#fafafa', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, fontFamily: 'inherit' }} onMouseEnter={e => { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.background = ROSE_LIGHT; }} onMouseLeave={e => { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.background = '#fafafa'; }}>
                       <IconCamera size={32} color={ROSE} />
                       <span style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}>Take a photo or upload from library</span>
                       <span style={{ fontSize: 13, color: '#94a3b8' }}>Photo will be compressed automatically</span>
@@ -273,10 +245,7 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
                     <div style={{ border: `1.5px solid ${ROSE}44`, borderRadius: 12, padding: '14px 16px', background: ROSE_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <span style={{ fontSize: 16, color: ROSE }}>✓</span>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>Photo ready</div>
-                          <div style={{ fontSize: 12, color: '#64748b' }}>{photoName}</div>
-                        </div>
+                        <div><div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>Photo ready</div><div style={{ fontSize: 12, color: '#64748b' }}>{photoName}</div></div>
                       </div>
                       <button onClick={() => { setPhoto(null); setPhotoName(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: ROSE, fontFamily: 'inherit', fontWeight: 600 }}>Change</button>
                     </div>
@@ -286,56 +255,37 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
             </div>
           ) : (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
                 <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#0f172a' }}>{result.productName}</h3>
-                <button onClick={resetForm} style={{ padding: '6px 12px', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 8, fontSize: 13, color: ROSE, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>Decode another</button>
-              </div>
-              <div style={{ fontSize: 15, lineHeight: 1.7, color: '#1e293b', listStylePosition: 'inside', marginBottom: 24 }}>
-                {formatAnalysis(result.analysis)}
-              </div>
-              {followUpAnswer && (
-                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '14px 16px', marginBottom: 16, fontSize: 14, color: '#374151', lineHeight: 1.6 }}>
-                  {formatAnalysis(followUpAnswer)}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <SaveButton productName={result.productName} />
+                  <button onClick={resetForm} style={{ padding: '8px 12px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>Decode another</button>
                 </div>
+              </div>
+              <div style={{ fontSize: 15, lineHeight: 1.7, color: '#1e293b', listStylePosition: 'inside', marginBottom: 24 }}>{formatAnalysis(result.analysis)}</div>
+              {followUpAnswer && (
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '14px 16px', marginBottom: 16, fontSize: 14, color: '#374151', lineHeight: 1.6 }}>{formatAnalysis(followUpAnswer)}</div>
               )}
               <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Got a follow-up question?</div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <input value={followUp} onChange={e => setFollowUp(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleFollowUp()}
-                    placeholder="e.g. Is this safe for sensitive skin?"
-                    style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none' }}
-                    onFocus={e => e.target.style.borderColor = ROSE}
-                    onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
-                  <button onClick={handleFollowUp} disabled={!followUp.trim() || followUpLoading} style={{
-                    padding: '10px 16px', background: followUp.trim() && !followUpLoading ? ROSE : '#e2e8f0',
-                    color: followUp.trim() && !followUpLoading ? '#fff' : '#94a3b8',
-                    border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600,
-                    cursor: followUp.trim() && !followUpLoading ? 'pointer' : 'default', fontFamily: 'inherit', flexShrink: 0,
-                  }}>
-                    {followUpLoading ? '…' : '→'}
-                  </button>
+                  <input value={followUp} onChange={e => setFollowUp(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleFollowUp()} placeholder="e.g. Is this safe for sensitive skin?" style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none' }} onFocus={e => e.target.style.borderColor = ROSE} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                  <button onClick={handleFollowUp} disabled={!followUp.trim() || followUpLoading} style={{ padding: '10px 16px', background: followUp.trim() && !followUpLoading ? ROSE : '#e2e8f0', color: followUp.trim() && !followUpLoading ? '#fff' : '#94a3b8', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: followUp.trim() && !followUpLoading ? 'pointer' : 'default', fontFamily: 'inherit', flexShrink: 0 }}>{followUpLoading ? '…' : '→'}</button>
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Sticky footer — input screen only */}
         {!result && (
-          <div style={{ padding: '10px 24px 16px', borderTop: '1px solid #f1f5f9', background: '#fff', flexShrink: 0 }}>
+          <div style={{ padding: '12px 24px 16px', borderTop: '1px solid #f1f5f9', background: '#fff', flexShrink: 0 }}>
             {isExample && inputMode === 'text' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 13, color: ROSE }}>
-                <IconLightbulb size={13} color={ROSE} />
-                <span>We&apos;ve pre-filled an example — hit the button to try it, replace with your own, or try the photo upload </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, justifyContent: 'center' }}>
+                <span style={{ fontSize: 13 }}>👆</span>
+                <span style={{ fontSize: 13, color: '#94a3b8' }}>We&apos;ve pre-filled an example — hit the button to try it, replace with your own, or try the photo upload. During our test phase we&apos;ve added this to get you started!</span>
               </div>
             )}
-            <button onClick={handleDecode} disabled={!canSubmit || loading} style={{
-              width: '100%', padding: '14px', background: canSubmit && !loading ? ROSE : '#e2e8f0',
-              color: canSubmit && !loading ? '#fff' : '#94a3b8',
-              border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600,
-              cursor: canSubmit && !loading ? 'pointer' : 'default', fontFamily: 'inherit', transition: 'all 0.15s ease',
-            }}>
+            <button onClick={handleDecode} disabled={!canSubmit || loading} style={{ width: '100%', padding: '14px', background: canSubmit && !loading ? ROSE : '#e2e8f0', color: canSubmit && !loading ? '#fff' : '#94a3b8', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: canSubmit && !loading ? 'pointer' : 'default', fontFamily: 'inherit', transition: 'all 0.15s ease' }}>
               {loading ? 'Analysing ingredients…' : 'Decode ingredients →'}
             </button>
           </div>

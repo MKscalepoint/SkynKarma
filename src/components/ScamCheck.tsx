@@ -2,13 +2,14 @@
 
 import { useState, useRef } from 'react';
 import { UserProfile } from '@/types';
+import { addSavedProduct, getSavedProducts } from '@/lib/storage';
 
 const ROSE = '#b5737a';
 const ROSE_LIGHT = '#fdf2f3';
 const ROSE_MID = '#f2d0d3';
 
 const EXAMPLE_PRODUCT = 'GlowUp Pro Stem Cell Regenerating Serum';
-const EXAMPLE_CLAIM = "'Clinically proven to reduce wrinkles by 87% in 7 days using patented stem cell technology. As seen on Dragon's Den. Used by celebrities worldwide.'";
+const EXAMPLE_CLAIM = "Clinically proven to reduce wrinkles by 87% in 7 days using patented stem cell technology. As seen on Dragons' Den. Dermatologist approved.";
 
 interface ScamCheckProps {
   profile: UserProfile | null;
@@ -61,6 +62,23 @@ const IconLightbulb = ({ size = 14, color = '#64748b' }: { size?: number; color?
   </svg>
 );
 
+function SaveButton({ productName }: { productName: string }) {
+  const already = getSavedProducts().some(p => p.name.toLowerCase() === productName.toLowerCase());
+  const [saved, setSaved] = useState(already);
+  const handleSave = () => {
+    if (saved) return;
+    addSavedProduct({ name: productName, source: 'reality-check' });
+    setSaved(true);
+  };
+  return (
+    <button onClick={handleSave} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: saved ? '#f0fdf4' : ROSE_LIGHT, border: `1px solid ${saved ? '#bbf7d0' : ROSE_MID}`, borderRadius: 8, cursor: saved ? 'default' : 'pointer', fontSize: 13, fontWeight: 600, color: saved ? '#10b981' : ROSE, fontFamily: 'inherit', transition: 'all 0.15s' }}>
+      {saved
+        ? <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Saved</>
+        : <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={ROSE} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Save product</>}
+    </button>
+  );
+}
+
 async function compressImage(base64: string): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -82,8 +100,7 @@ function extractJSON(text: string): Verdict | null {
   try { return JSON.parse(text) as Verdict; } catch { /* continue */ }
   const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (match) { try { return JSON.parse(match[1].trim()) as Verdict; } catch { /* continue */ } }
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
+  const start = text.indexOf('{'); const end = text.lastIndexOf('}');
   if (start !== -1 && end !== -1) { try { return JSON.parse(text.slice(start, end + 1)) as Verdict; } catch { /* continue */ } }
   return null;
 }
@@ -109,72 +126,50 @@ export default function ScamCheck({ profile, onClose }: ScamCheckProps) {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoName(file.name);
-    setIsExample(false);
     const reader = new FileReader();
     reader.onload = async () => {
       const raw = (reader.result as string).split(',')[1];
       setPhoto(await compressImage(raw));
+      setIsExample(false);
     };
     reader.readAsDataURL(file);
   };
 
   const handleCheck = async () => {
     if (!productName.trim() && !photo) return;
-    setLoading(true);
-    setVerdict(null);
-    setError('');
-    setFollowUpAnswer('');
+    setLoading(true); setVerdict(null); setError(''); setFollowUpAnswer('');
+    const prompt = `You are Skyn Karma's product authenticity expert. Respond ONLY with valid JSON — no markdown, no text outside the JSON.
 
-    const prompt = `You are Skyn Karma's product authenticity expert. Analyse this skincare product and respond ONLY with a valid JSON object — no markdown, no text outside the JSON.
+Product: ${productName || 'Unknown'}
+Claims: ${brandClaim || 'Not provided'}
+Ingredients: ${ingredients || 'Not provided'}
+${profile ? `User: ${profile.skinType} skin, concerns: ${profile.concerns?.join(', ')}` : ''}
 
-Product name: ${productName || 'Unknown (see photo)'}
-Brand claims: ${brandClaim || 'Not provided'}
-Ingredient list: ${ingredients || 'Not provided'}
-${profile ? `User skin type: ${profile.skinType}, concerns: ${profile.concerns?.join(', ')}` : ''}
-
-JSON format (use exactly these keys):
+JSON:
 {
-  "score": <0-100, where 100=completely legitimate>,
+  "score": <0-100>,
   "verdict": <"legit"|"overpriced"|"misleading"|"scam">,
-  "summary": "<1-2 sentence verdict>",
-  "claimsVsReality": "<claims vs what ingredients actually do>",
-  "ingredientTruth": "<key ingredient analysis>",
+  "summary": "<1-2 sentences>",
+  "claimsVsReality": "<claims vs ingredients>",
+  "ingredientTruth": "<ingredient analysis>",
   "redFlags": ["<flag>"],
   "greenFlags": ["<flag>"],
-  "alternatives": "<better alternatives if relevant>",
+  "alternatives": "<better alternatives>",
   "bottomLine": "<one punchy sentence>"
 }`;
-
     try {
-      let messages;
-      if (inputMode === 'photo' && photo) {
-        messages = [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: photo } },
-            { type: 'text', text: prompt + '\n\nAlso extract relevant product info from the image.' }
-          ]
-        }];
-      } else {
-        messages = [{ role: 'user', content: prompt }];
-      }
-
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, profile }),
-      });
+      const messages = inputMode === 'photo' && photo
+        ? [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: photo } }, { type: 'text', text: prompt + '\n\nExtract product info from the image too.' }] }]
+        : [{ role: 'user', content: prompt }];
+      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages, profile }) });
       const data = await res.json();
       const text = data.content?.find((b: { type: string }) => b.type === 'text')?.text || '';
       const parsed = extractJSON(text);
-      if (!parsed) throw new Error('Could not parse response');
+      if (!parsed) throw new Error('Parse error');
       setVerdict(parsed);
       setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError('Something went wrong. Please try again.'); }
+    finally { setLoading(false); }
   };
 
   const handleFollowUp = async () => {
@@ -182,30 +177,22 @@ JSON format (use exactly these keys):
     setFollowUpLoading(true);
     try {
       const messages = [
-        { role: 'user', content: `You assessed "${productName || 'a product'}" with verdict: ${verdict.verdict}. Summary: ${verdict.summary}` },
+        { role: 'user', content: `You assessed "${productName}": ${verdict.verdict}. ${verdict.summary}` },
         { role: 'assistant', content: `${verdict.verdict}: ${verdict.summary} ${verdict.bottomLine}` },
         { role: 'user', content: followUp },
       ];
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, profile }),
-      });
+      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages, profile }) });
       const data = await res.json();
-      const text = data.content?.find((b: { type: string }) => b.type === 'text')?.text || 'Sorry, something went wrong.';
-      setFollowUpAnswer(text);
+      setFollowUpAnswer(data.content?.find((b: { type: string }) => b.type === 'text')?.text || 'Sorry, something went wrong.');
       setFollowUp('');
-    } catch {
-      setFollowUpAnswer('Something went wrong. Please try again.');
-    } finally {
-      setFollowUpLoading(false);
-    }
+    } catch { setFollowUpAnswer('Something went wrong.'); }
+    finally { setFollowUpLoading(false); }
   };
 
   const reset = () => {
     setVerdict(null); setProductName(EXAMPLE_PRODUCT); setBrandClaim(EXAMPLE_CLAIM);
-    setIngredients(''); setPhoto(null); setPhotoName('');
-    setError(''); setFollowUpAnswer(''); setFollowUp(''); setIsExample(true);
+    setIngredients(''); setPhoto(null); setPhotoName(''); setError('');
+    setFollowUpAnswer(''); setFollowUp(''); setIsExample(true);
     setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
   };
 
@@ -224,13 +211,10 @@ JSON format (use exactly these keys):
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '24px 24px 90px', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
       <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 640, maxHeight: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
 
-        {/* Header */}
         <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <IconWarning size={16} />
-              </div>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconWarning size={16} /></div>
               <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#0f172a' }}>Reality Check</h2>
             </div>
             <p style={{ margin: 0, fontSize: 14, color: '#64748b' }}>Is that TikTok or Instagram product actually worth it?</p>
@@ -238,36 +222,20 @@ JSON format (use exactly these keys):
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 18, color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
         </div>
 
-        {/* Scrollable content */}
         <div ref={scrollContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {!verdict ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 10, padding: 4, gap: 4 }}>
                 {(['text', 'photo'] as const).map(mode => (
-                  <button key={mode} onClick={() => setInputMode(mode)} style={{
-                    flex: 1, padding: '8px', border: 'none', borderRadius: 8,
-                    background: inputMode === mode ? '#fff' : 'transparent',
-                    color: inputMode === mode ? '#0f172a' : '#64748b',
-                    fontWeight: inputMode === mode ? 600 : 400,
-                    fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
-                    boxShadow: inputMode === mode ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-                    transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  }}>
+                  <button key={mode} onClick={() => setInputMode(mode)} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: 8, background: inputMode === mode ? '#fff' : 'transparent', color: inputMode === mode ? '#0f172a' : '#64748b', fontWeight: inputMode === mode ? 600 : 400, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', boxShadow: inputMode === mode ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                     {mode === 'text' ? <><IconSearch size={14} color={inputMode === mode ? '#0f172a' : '#94a3b8'} /> Enter product details</> : <><IconCamera size={14} color={inputMode === mode ? '#0f172a' : '#94a3b8'} /> Photo the ad or product</>}
                   </button>
                 ))}
               </div>
 
               <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
-                  Product name {inputMode === 'text' && <span style={{ color: '#ef4444' }}>*</span>}
-                  {inputMode === 'photo' && <span style={{ color: '#94a3b8', fontWeight: 400 }}> (optional if photo is clear)</span>}
-                </label>
-                <input value={productName} onChange={e => { setProductName(e.target.value); setIsExample(false); }}
-                  placeholder="e.g. GlowLab Pro Stem Cell Regenerating Serum"
-                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
-                  onFocus={e => e.target.style.borderColor = ROSE}
-                  onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Product name {inputMode === 'text' && <span style={{ color: '#ef4444' }}>*</span>}{inputMode === 'photo' && <span style={{ color: '#94a3b8', fontWeight: 400 }}> (optional)</span>}</label>
+                <input value={productName} onChange={e => { setProductName(e.target.value); setIsExample(false); }} placeholder="e.g. GlowLab Pro Stem Cell Regenerating Serum" style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }} onFocus={e => e.target.style.borderColor = ROSE} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
 
               {inputMode === 'photo' && (
@@ -275,26 +243,14 @@ JSON format (use exactly these keys):
                   <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Photo of product or ad</label>
                   <input ref={fileRef} type="file" accept="image/*" onChange={handlePhotoSelect} style={{ display: 'none' }} />
                   {!photo ? (
-                    <button onClick={() => fileRef.current?.click()} style={{
-                      width: '100%', padding: '24px 20px', border: '2px dashed #e2e8f0', borderRadius: 12,
-                      background: '#fafafa', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, fontFamily: 'inherit',
-                    }}
-                      onMouseEnter={e => { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.background = ROSE_LIGHT; }}
-                      onMouseLeave={e => { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.background = '#fafafa'; }}
-                    >
+                    <button onClick={() => fileRef.current?.click()} style={{ width: '100%', padding: '24px 20px', border: '2px dashed #e2e8f0', borderRadius: 12, background: '#fafafa', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, fontFamily: 'inherit' }} onMouseEnter={e => { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.background = ROSE_LIGHT; }} onMouseLeave={e => { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.background = '#fafafa'; }}>
                       <IconCamera size={28} color={ROSE} />
                       <span style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}>Photo the product, packaging or ad</span>
                       <span style={{ fontSize: 12, color: '#94a3b8' }}>Works with screenshots — auto compressed</span>
                     </button>
                   ) : (
                     <div style={{ border: `1.5px solid ${ROSE}44`, borderRadius: 12, padding: '14px 16px', background: ROSE_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontSize: 16, color: ROSE }}>✓</span>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>Photo ready</div>
-                          <div style={{ fontSize: 12, color: '#64748b' }}>{photoName}</div>
-                        </div>
-                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ fontSize: 16, color: ROSE }}>✓</span><div><div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>Photo ready</div><div style={{ fontSize: 12, color: '#64748b' }}>{photoName}</div></div></div>
                       <button onClick={() => { setPhoto(null); setPhotoName(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: ROSE, fontFamily: 'inherit', fontWeight: 600 }}>Change</button>
                     </div>
                   )}
@@ -302,32 +258,18 @@ JSON format (use exactly these keys):
               )}
 
               <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
-                  What does the brand claim? <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional but helps)</span>
-                </label>
-                <textarea value={brandClaim} onChange={e => { setBrandClaim(e.target.value); setIsExample(false); }}
-                  placeholder="e.g. 'Reduces wrinkles by 87% in 7 days', 'clinically proven'…"
-                  rows={2} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
-                  onFocus={e => e.target.style.borderColor = ROSE}
-                  onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>What does the brand claim? <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional but helps)</span></label>
+                <textarea value={brandClaim} onChange={e => { setBrandClaim(e.target.value); setIsExample(false); }} placeholder="e.g. 'Reduces wrinkles by 87% in 7 days'…" rows={2} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }} onFocus={e => e.target.style.borderColor = ROSE} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
 
               <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
-                  Ingredient list <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional — makes analysis more accurate)</span>
-                </label>
-                <textarea value={ingredients} onChange={e => { setIngredients(e.target.value); setIsExample(false); }}
-                  placeholder="Paste from packaging, website, or an app like INCI Beauty…"
-                  rows={2} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
-                  onFocus={e => e.target.style.borderColor = ROSE}
-                  onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Ingredient list <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span></label>
+                <textarea value={ingredients} onChange={e => { setIngredients(e.target.value); setIsExample(false); }} placeholder="Paste from packaging, website, or an app like INCI Beauty…" rows={2} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }} onFocus={e => e.target.style.borderColor = ROSE} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
 
               <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                <IconLightbulb size={14} color={ROSE} />
-                <span><strong>Tip:</strong> Screenshot a TikTok or Instagram ad and upload it — Skyn Karma will read the claims and cross-reference against skincare science.</span>
+                <IconLightbulb size={14} color={ROSE} /><span><strong>Tip:</strong> Screenshot a TikTok or Instagram ad and upload it — Skyn Karma will read the claims and cross-reference against skincare science.</span>
               </div>
-
               {error && <div style={{ color: '#ef4444', fontSize: 13 }}>{error}</div>}
             </div>
 
@@ -350,10 +292,7 @@ JSON format (use exactly these keys):
                 <p style={{ margin: 0, fontSize: 14, color: '#374151', lineHeight: 1.6 }}>{verdict.summary}</p>
               </div>
 
-              {[
-                { label: 'Claims vs Reality', content: verdict.claimsVsReality },
-                { label: 'Ingredient Truth', content: verdict.ingredientTruth },
-              ].map(({ label, content }) => (
+              {[{ label: 'Claims vs Reality', content: verdict.claimsVsReality }, { label: 'Ingredient Truth', content: verdict.ingredientTruth }].map(({ label, content }) => (
                 <div key={label} style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>{label}</div>
                   <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: '#374151', lineHeight: 1.6 }}>{content}</div>
@@ -364,21 +303,13 @@ JSON format (use exactly these keys):
                 {verdict.redFlags?.length > 0 && (
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#ef4444', marginBottom: 8 }}>Red Flags</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {verdict.redFlags.map((f, i) => (
-                        <div key={i} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#374151', lineHeight: 1.4 }}>{f}</div>
-                      ))}
-                    </div>
+                    {verdict.redFlags.map((f, i) => <div key={i} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#374151', lineHeight: 1.4, marginBottom: 6 }}>{f}</div>)}
                   </div>
                 )}
                 {verdict.greenFlags?.length > 0 && (
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#10b981', marginBottom: 8 }}>Green Flags</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {verdict.greenFlags.map((f, i) => (
-                        <div key={i} style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#374151', lineHeight: 1.4 }}>{f}</div>
-                      ))}
-                    </div>
+                    {verdict.greenFlags.map((f, i) => <div key={i} style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#374151', lineHeight: 1.4, marginBottom: 6 }}>{f}</div>)}
                   </div>
                 )}
               </div>
@@ -395,56 +326,37 @@ JSON format (use exactly these keys):
                 <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1.5 }}>{verdict.bottomLine}</div>
               </div>
 
+              {/* Save product button */}
+              <div style={{ marginBottom: 20 }}>
+                <SaveButton productName={productName} />
+              </div>
+
               {followUpAnswer && (
-                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '14px 16px', marginBottom: 16, fontSize: 14, color: '#374151', lineHeight: 1.6 }}>
-                  {formatText(followUpAnswer)}
-                </div>
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '14px 16px', marginBottom: 16, fontSize: 14, color: '#374151', lineHeight: 1.6 }}>{formatText(followUpAnswer)}</div>
               )}
 
               <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 16, marginBottom: 16 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Got a follow-up question?</div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <input value={followUp} onChange={e => setFollowUp(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleFollowUp()}
-                    placeholder="e.g. What would you recommend instead?"
-                    style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none' }}
-                    onFocus={e => e.target.style.borderColor = ROSE}
-                    onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
-                  <button onClick={handleFollowUp} disabled={!followUp.trim() || followUpLoading} style={{
-                    padding: '10px 16px', background: followUp.trim() && !followUpLoading ? ROSE : '#e2e8f0',
-                    color: followUp.trim() && !followUpLoading ? '#fff' : '#94a3b8',
-                    border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600,
-                    cursor: followUp.trim() && !followUpLoading ? 'pointer' : 'default', fontFamily: 'inherit', flexShrink: 0,
-                  }}>
-                    {followUpLoading ? '…' : '→'}
-                  </button>
+                  <input value={followUp} onChange={e => setFollowUp(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleFollowUp()} placeholder="e.g. What would you recommend instead?" style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none' }} onFocus={e => e.target.style.borderColor = ROSE} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                  <button onClick={handleFollowUp} disabled={!followUp.trim() || followUpLoading} style={{ padding: '10px 16px', background: followUp.trim() && !followUpLoading ? ROSE : '#e2e8f0', color: followUp.trim() && !followUpLoading ? '#fff' : '#94a3b8', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: followUp.trim() && !followUpLoading ? 'pointer' : 'default', fontFamily: 'inherit', flexShrink: 0 }}>{followUpLoading ? '…' : '→'}</button>
                 </div>
               </div>
 
-              <button onClick={reset} style={{ width: '100%', padding: '12px', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 10, fontSize: 14, color: ROSE, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                Check another product
-              </button>
+              <button onClick={reset} style={{ width: '100%', padding: '12px', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 10, fontSize: 14, color: ROSE, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Check another product</button>
             </div>
           )}
         </div>
 
-        {/* Sticky footer — input screen only */}
         {!verdict && (
-          <div style={{ padding: '10px 24px 16px', borderTop: '1px solid #f1f5f9', background: '#fff', flexShrink: 0 }}>
+          <div style={{ padding: '12px 24px 16px', borderTop: '1px solid #f1f5f9', background: '#fff', flexShrink: 0 }}>
             {isExample && inputMode === 'text' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 13, color: ROSE }}>
-                <IconLightbulb size={13} color={ROSE} />
-                <span>We&apos;ve pre-filled an example — hit the button to try it, replace with your own, or try the photo upload</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, justifyContent: 'center' }}>
+                <span style={{ fontSize: 13 }}>👆</span>
+                <span style={{ fontSize: 13, color: '#94a3b8' }}>We&apos;ve pre-filled an example — hit the button to try it, replace with your own, or try the photo upload. During our test phase we&apos;ve added this to get you started!</span>
               </div>
             )}
-            <button onClick={handleCheck} disabled={!canSubmit || loading} style={{
-              width: '100%', padding: '14px', background: canSubmit && !loading ? ROSE : '#e2e8f0',
-              color: canSubmit && !loading ? '#fff' : '#94a3b8',
-              border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600,
-              cursor: canSubmit && !loading ? 'pointer' : 'default',
-              fontFamily: 'inherit', transition: 'all 0.15s ease',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}>
+            <button onClick={handleCheck} disabled={!canSubmit || loading} style={{ width: '100%', padding: '14px', background: canSubmit && !loading ? ROSE : '#e2e8f0', color: canSubmit && !loading ? '#fff' : '#94a3b8', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: canSubmit && !loading ? 'pointer' : 'default', fontFamily: 'inherit', transition: 'all 0.15s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               {loading ? 'Investigating…' : <><IconWarning size={16} color={canSubmit && !loading ? '#fff' : '#94a3b8'} /> Run reality check →</>}
             </button>
           </div>
