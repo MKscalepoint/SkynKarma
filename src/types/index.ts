@@ -4,7 +4,7 @@ export interface Message {
 }
 
 export interface UserProfile {
-  skinType?: string | string[];
+  skinType?: string;
   concerns?: string[];
   experience?: string;
   age?: string;
@@ -81,7 +81,7 @@ export const ONBOARDING_QUESTIONS: OnboardingQuestion[] = [
     id: 'skinType',
     question: "What's your skin type?",
     subtitle: "This helps us tailor every recommendation to how your skin actually behaves.",
-    type: 'multi',
+    type: 'single',
     field: 'skinType',
     options: ['Oily', 'Dry', 'Combination', 'Normal', 'Sensitive', "I'm not sure"]
   },
