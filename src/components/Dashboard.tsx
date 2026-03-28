@@ -184,7 +184,7 @@ export default function Dashboard({
               <div style={{ fontSize: 13, color: '#64748b', marginBottom: 14, lineHeight: 1.5 }}>
                 {profile.completed
                   ? `Personalised advice based on your ${profile.skinType?.toLowerCase()} skin profile`
-                  : 'Ask me anything — I'm your Skyn Karma advisor — set up your profile for personalised advice'}
+                  : "Ask me anything — I'm your Skyn Karma advisor — set up your profile for personalised advice"}
               </div>
               <div onClick={() => onOpenChat()} style={{
                 display: 'flex', alignItems: 'center', gap: 10,
