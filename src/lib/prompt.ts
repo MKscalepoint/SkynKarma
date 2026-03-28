@@ -1,5 +1,5 @@
 export function buildSystemPrompt(profile: {
-  skinType?: string;
+  skinType?: string | string[];
   concerns?: string[];
   experience?: string;
   age?: string;
