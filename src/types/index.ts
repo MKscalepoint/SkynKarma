@@ -81,7 +81,7 @@ export const ONBOARDING_QUESTIONS: OnboardingQuestion[] = [
     id: 'skinType',
     question: "What's your skin type?",
     subtitle: "This helps us tailor every recommendation to how your skin actually behaves.",
-    type: 'single',
+    type: 'multi',
     field: 'skinType',
     options: ['Oily', 'Dry', 'Combination', 'Normal', 'Sensitive', "I'm not sure"]
   },
