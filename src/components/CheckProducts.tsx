@@ -8,7 +8,7 @@ const ROSE = '#b5737a';
 const ROSE_LIGHT = '#fdf2f3';
 const ROSE_MID = '#f2d0d3';
 
-const PRODUCT_TYPES = ['Cleanser', 'Toner', 'Essence', 'Serum', 'Eye Cream', 'Moisturiser', 'Face Oil', 'SPF / Sunscreen', 'Exfoliant', 'Mask', 'Other'];
+const PRODUCT_TYPES = ['Cleanser', 'Toner', 'Essence', 'Serum', 'Treatment', 'Eye Cream', 'Moisturiser', 'Face Oil', 'SPF / Sunscreen', 'Exfoliant', 'Mask', 'Other'];
 
 const EXAMPLE_PRODUCTS = [
   { name: 'The Ordinary Niacinamide 10% + Zinc 1%', type: 'Serum' },
