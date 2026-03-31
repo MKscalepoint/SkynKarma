@@ -17,6 +17,7 @@ import ScamCheck from '@/components/ScamCheck';
 
 const ROSE = '#b5737a';
 const ROSE_LIGHT = '#fdf2f3';
+const FEEDBACK_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScN4D5-7D0YRyqRf_7Z5ehVDVuBeo9JPxJC7GTGx3GqPeym_g/viewform?usp=header';
 
 type View = 'landing' | 'onboarding' | 'dashboard' | 'chat' | 'saved';
 
@@ -62,6 +63,33 @@ function AppFooter() {
         Got feedback? We&apos;d love to hear it —{' '}
         <a href="mailto:martinandmirella@gmail.com" style={{ color: '#94a3b8', textDecoration: 'none' }}>martinandmirella@gmail.com</a>
       </p>
+    </div>
+  );
+}
+
+function BetaBanner() {
+  const [visible, setVisible] = useState(true);
+  if (!visible) return null;
+  return (
+    <div style={{
+      background: '#0f172a', color: '#fff',
+      padding: '10px 20px',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      gap: 12, flexShrink: 0, position: 'relative', flexWrap: 'wrap',
+    }}>
+      <span style={{ fontSize: 13, textAlign: 'center' }}>
+        👋 You're one of our first users — tell us what you think.{' '}
+        <a href={FEEDBACK_FORM_URL} target="_blank" rel="noopener noreferrer"
+          style={{ color: '#b5737a', fontWeight: 700, textDecoration: 'none' }}>
+          Share your thoughts →
+        </a>
+      </span>
+      <button onClick={() => setVisible(false)} style={{
+        position: 'absolute', right: 16,
+        background: 'none', border: 'none', cursor: 'pointer',
+        color: 'rgba(255,255,255,0.5)', fontSize: 18, lineHeight: 1,
+        padding: 0,
+      }}>×</button>
     </div>
   );
 }
@@ -326,7 +354,7 @@ export default function App() {
 
   return (
     <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'DM Sans', system-ui, sans-serif", background: '#ffffff' }}>
-
+      <BetaBanner />
       {/* ── Header ── */}
       <header style={{ padding: '0 20px', height: 58, borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff', flexShrink: 0, zIndex: 40 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

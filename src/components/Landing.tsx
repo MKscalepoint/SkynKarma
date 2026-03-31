@@ -5,7 +5,7 @@ import { useState } from 'react';
 const ROSE = '#b5737a';
 const ROSE_LIGHT = '#fdf2f3';
 const ROSE_MID = '#f2d0d3';
-
+const FEEDBACK_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScN4D5-7D0YRyqRf_7Z5ehVDVuBeo9JPxJC7GTGx3GqPeym_g/viewform?usp=header';
 const FAQS = [
   {
     q: "How is advice personalised to me?",
@@ -149,7 +149,20 @@ interface LandingProps {
 export default function Landing({ onStart, hasProfile, onResume }: LandingProps) {
   return (
     <div style={{ minHeight: '100vh', background: '#ffffff', fontFamily: "'DM Sans', system-ui, sans-serif", overflowY: 'auto' }}>
-
+    <div style={{
+      background: '#0f172a', color: '#fff',
+      padding: '10px 20px',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      gap: 12, position: 'relative', flexWrap: 'wrap',
+    }}>
+      <span style={{ fontSize: 13, textAlign: 'center' }}>
+        👋 We&apos;re just launching — try it free and tell us what you think.{' '}
+        <a href={FEEDBACK_FORM_URL} target="_blank" rel="noopener noreferrer"
+          style={{ color: '#b5737a', fontWeight: 700, textDecoration: 'none' }}>
+          Share your thoughts →
+        </a>
+      </span>
+</div>
       {/* Nav */}
       <nav style={{
         padding: '0 40px', height: 64,
