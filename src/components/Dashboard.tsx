@@ -183,7 +183,7 @@ export default function Dashboard({
               <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginBottom: 3 }}>Ask Skyn Karma</div>
               <div style={{ fontSize: 13, color: '#64748b', marginBottom: 14, lineHeight: 1.5 }}>
                 {profile.completed
-                  ? `Personalised advice based on your ${profile.skinType?.toLowerCase()} skin profile`
+                  ? `Personalised advice based on your ${Array.isArray(profile.skinType) ? profile.skinType.join(', ').toLowerCase() : profile.skinType?.toLowerCase()} skin profile`
                   : "Ask me anything — I'm your AI advisor — set up your profile for personalised advice"}
               </div>
               <div onClick={() => onOpenChat()} style={{
