@@ -15,6 +15,11 @@ export default function ProductTour({ onOpenChat, onOpenIngredients }: ProductTo
     if (typeof window === 'undefined') return;
     if (localStorage.getItem(TOUR_KEY)) return;
 
+    const isMobile = window.innerWidth < 641;
+    const ids = isMobile
+      ? { chat: '#mob-tour-chat', tools: '#mob-tour-tools', saved: '#mob-tour-saved', profile: '#mob-tour-profile' }
+      : { chat: '#tour-chat', tools: '#tour-tools', saved: '#tour-saved', profile: '#tour-profile' };
+
     const driverObj = driver({
       showProgress: true,
       animate: true,
@@ -40,7 +45,16 @@ export default function ProductTour({ onOpenChat, onOpenIngredients }: ProductTo
           },
         },
         {
-          element: '#tour-chat',
+          element: ids.profile,
+          popover: {
+            title: '✨ Set Up Your Skin Profile',
+            description: 'Tell us about your skin type and concerns — every piece of advice will be personalised to you. Takes 2 minutes.',
+            side: 'top',
+            align: 'center',
+          },
+        },
+        {
+          element: ids.chat,
           popover: {
             title: '💬 Your AI Skin Advisor',
             description: 'Ask anything about skincare — ingredients, routines, products. Get honest, science-backed advice tailored to your skin.',
@@ -49,7 +63,7 @@ export default function ProductTour({ onOpenChat, onOpenIngredients }: ProductTo
           },
         },
         {
-          element: '#tour-tools',
+          element: ids.tools,
           popover: {
             title: '🔬 Powerful Skincare Tools',
             description: 'Three tools to help you make smarter decisions: decode ingredients, check product compatibility, and spot misleading claims.',
@@ -58,19 +72,10 @@ export default function ProductTour({ onOpenChat, onOpenIngredients }: ProductTo
           },
         },
         {
-          element: '#tour-saved',
+          element: ids.saved,
           popover: {
             title: '🔖 Save & Find Best Prices',
             description: 'Save products you love or want to try, then find the best price across major retailers with one tap.',
-            side: 'top',
-            align: 'center',
-          },
-        },
-        {
-          element: '#tour-profile',
-          popover: {
-            title: '✨ Set Up Your Skin Profile',
-            description: 'Tell us about your skin type and concerns — every piece of advice will be personalised to you. Takes 2 minutes.',
             side: 'top',
             align: 'center',
           },

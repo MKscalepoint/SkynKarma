@@ -380,7 +380,11 @@ export default function App() {
           {/* Desktop nav */}
           <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <button id="tour-welcome" onClick={() => { setView('dashboard'); setActiveTab('home'); }} style={{ padding: '6px 12px', background: isDashboard && !anyToolOpen ? ROSE : 'transparent', border: `1px solid ${isDashboard && !anyToolOpen ? ROSE : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, color: isDashboard && !anyToolOpen ? '#fff' : '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}>Home</button>
-
+<button id="tour-profile" onClick={() => setEditingProfile(true)} style={{ padding: '6px 12px', background: 'transparent', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}
+              onMouseEnter={e => { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.color = ROSE; }}
+              onMouseLeave={e => { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.color = '#64748b'; }}>
+              {profile ? 'Profile' : 'Set up profile'}
+            </button>
             <button id="tour-chat" onClick={() => { setView('chat'); setActiveTab('chat'); }} style={{ padding: '6px 12px', background: isChat ? ROSE : 'transparent', border: `1px solid ${isChat ? ROSE : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, color: isChat ? '#fff' : '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}>Chat</button>
 
             <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
@@ -412,11 +416,7 @@ export default function App() {
               {savedProducts.length > 0 && <span style={{ background: isSaved ? 'rgba(255,255,255,0.3)' : ROSE, color: '#fff', borderRadius: 10, padding: '1px 6px', fontSize: 11, fontWeight: 700 }}>{savedProducts.length}</span>}
             </button>
 
-            <button id="tour-profile" onClick={() => setEditingProfile(true)} style={{ padding: '6px 12px', background: 'transparent', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}
-              onMouseEnter={e => { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.color = ROSE; }}
-              onMouseLeave={e => { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.color = '#64748b'; }}>
-              {profile ? 'Profile' : 'Set up profile'}
-            </button>
+            
           </div>
 
           {/* Mobile menu */}
@@ -604,11 +604,11 @@ export default function App() {
       {/* Mobile bottom nav */}
       <div className="show-mobile" style={{ display: 'flex', alignItems: 'center', borderTop: '1px solid #e2e8f0', background: '#fff', flexShrink: 0, zIndex: 310, paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {([
-          { tab: 'home' as NavTab, label: 'Home',id: 'tour-welcome',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
-          { tab: 'chat' as NavTab, label: 'Chat',id: 'tour-chat',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
-          { tab: 'tools' as NavTab, label: 'Tools',id: 'tour-tools',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/></svg> },
-          { tab: 'saved' as NavTab, label: 'Saved',id: 'tour-saved',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> },
-          { tab: 'profile' as NavTab, label: 'Profile',id: 'tour-profile',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
+          { tab: 'home' as NavTab, label: 'Home',id: 'mob-tour-welcome',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
+          { tab: 'profile' as NavTab, label: 'Profile',id: 'mob-tour-profile',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
+          { tab: 'chat' as NavTab, label: 'Chat',id: 'mob-tour-chat',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
+          { tab: 'tools' as NavTab, label: 'Tools',id: 'mob-tour-tools',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/></svg> },
+          { tab: 'saved' as NavTab, label: 'Saved',id: 'mob-tour-saved',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> },
           ]).map(({ tab, label, icon, id }) => {
             const isActive = (
             (tab === 'home' && isDashboard && !anyToolOpen && !showToolsMenu) ||
