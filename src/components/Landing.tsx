@@ -190,7 +190,7 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
       </nav>
 
       {/* Hero */}
-      <div style={{ maxWidth: 760, margin: '0 auto', padding: '80px 40px 60px', textAlign: 'center' }}>
+      <div style={{ maxWidth: 760, margin: '0 auto', padding: '40px 40px 40px', textAlign: 'center' }}>
         <div style={{
           display: 'inline-block', background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`,
           borderRadius: 20, padding: '6px 16px', fontSize: 13, color: ROSE,
