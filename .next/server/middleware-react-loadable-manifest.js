@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{\"components/ProductTour.tsx -> driver.js\":{\"id\":\"components/ProductTour.tsx -> driver.js\",\"files\":[\"static/chunks/_app-pages-browser_node_modules_driver_js_dist_driver_js_mjs.js\"]},\"components/ProductTour.tsx -> driver.js/dist/driver.css\":{\"id\":\"components/ProductTour.tsx -> driver.js/dist/driver.css\",\"files\":[\"static/css/_app-pages-browser_node_modules_driver_js_dist_driver_css.css\",\"static/chunks/_app-pages-browser_node_modules_driver_js_dist_driver_css.js\"]}}"
+self.__REACT_LOADABLE_MANIFEST="{}"
