@@ -14,6 +14,7 @@ import SavedProducts from '@/components/SavedProducts';
 import IngredientDecoder from '@/components/IngredientDecoder';
 import CheckProducts from '@/components/CheckProducts';
 import ScamCheck from '@/components/ScamCheck';
+import ProductTour from '@/components/ProductTour';
 
 const ROSE = '#b5737a';
 const ROSE_LIGHT = '#fdf2f3';
@@ -378,12 +379,12 @@ export default function App() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {/* Desktop nav */}
           <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <button onClick={() => { setView('dashboard'); setActiveTab('home'); }} style={{ padding: '6px 12px', background: isDashboard && !anyToolOpen ? ROSE : 'transparent', border: `1px solid ${isDashboard && !anyToolOpen ? ROSE : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, color: isDashboard && !anyToolOpen ? '#fff' : '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}>Home</button>
+            <button id="tour-welcome" onClick={() => { setView('dashboard'); setActiveTab('home'); }} style={{ padding: '6px 12px', background: isDashboard && !anyToolOpen ? ROSE : 'transparent', border: `1px solid ${isDashboard && !anyToolOpen ? ROSE : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, color: isDashboard && !anyToolOpen ? '#fff' : '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}>Home</button>
 
-            <button onClick={() => { setView('chat'); setActiveTab('chat'); }} style={{ padding: '6px 12px', background: isChat ? ROSE : 'transparent', border: `1px solid ${isChat ? ROSE : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, color: isChat ? '#fff' : '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}>Chat</button>
+            <button id="tour-chat" onClick={() => { setView('chat'); setActiveTab('chat'); }} style={{ padding: '6px 12px', background: isChat ? ROSE : 'transparent', border: `1px solid ${isChat ? ROSE : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, color: isChat ? '#fff' : '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}>Chat</button>
 
             <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
-              <button onClick={() => setShowToolsMenu(s => !s)} style={{ padding: '6px 12px', background: anyToolOpen ? ROSE : 'transparent', border: `1px solid ${anyToolOpen ? ROSE : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, color: anyToolOpen ? '#fff' : '#64748b', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <button id="tour-tools" onClick={() => setShowToolsMenu(s => !s)} style={{ padding: '6px 12px', background: anyToolOpen ? ROSE : 'transparent', border: `1px solid ${anyToolOpen ? ROSE : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, color: anyToolOpen ? '#fff' : '#64748b', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}>
                 Tools <span style={{ fontSize: 10 }}>▾</span>
               </button>
               {showToolsMenu && (
@@ -404,14 +405,14 @@ export default function App() {
               )}
             </div>
 
-            <button onClick={() => { setView('saved'); setActiveTab('saved'); }} style={{ padding: '6px 12px', background: isSaved ? ROSE : 'transparent', border: `1px solid ${isSaved ? ROSE : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, color: isSaved ? '#fff' : '#64748b', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 5 }}
+            <button id="tour-saved" onClick={() => { setView('saved'); setActiveTab('saved'); }} style={{ padding: '6px 12px', background: isSaved ? ROSE : 'transparent', border: `1px solid ${isSaved ? ROSE : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, color: isSaved ? '#fff' : '#64748b', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 5 }}
               onMouseEnter={e => { if (!isSaved) { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.color = ROSE; } }}
               onMouseLeave={e => { if (!isSaved) { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.color = '#64748b'; } }}>
               Saved
               {savedProducts.length > 0 && <span style={{ background: isSaved ? 'rgba(255,255,255,0.3)' : ROSE, color: '#fff', borderRadius: 10, padding: '1px 6px', fontSize: 11, fontWeight: 700 }}>{savedProducts.length}</span>}
             </button>
 
-            <button onClick={() => setEditingProfile(true)} style={{ padding: '6px 12px', background: 'transparent', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}
+            <button id="tour-profile" onClick={() => setEditingProfile(true)} style={{ padding: '6px 12px', background: 'transparent', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}
               onMouseEnter={e => { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.color = ROSE; }}
               onMouseLeave={e => { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.color = '#64748b'; }}>
               {profile ? 'Profile' : 'Set up profile'}
@@ -472,6 +473,8 @@ export default function App() {
 
         {/* Dashboard */}
         {isDashboard && (
+        <>
+          <ProductTour onOpenChat={handleOpenChat} onOpenIngredients={() => setShowIngredients(true)} />
           <Dashboard
             profile={profile || { skinType: 'all skin types', concerns: [], experience: '', age: '', sensitivities: '', completed: false }}
             routine={routine}
@@ -483,6 +486,7 @@ export default function App() {
             onRoutineUpdate={handleRoutineUpdate}
             onRegisterScrollToRoutine={(fn) => { scrollToRoutineRef.current = fn; }}
           />
+           </>
         )}
 
         {/* Saved Products */}
@@ -600,13 +604,13 @@ export default function App() {
       {/* Mobile bottom nav */}
       <div className="show-mobile" style={{ display: 'flex', alignItems: 'center', borderTop: '1px solid #e2e8f0', background: '#fff', flexShrink: 0, zIndex: 310, paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {([
-          { tab: 'home' as NavTab, label: 'Home', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
-          { tab: 'chat' as NavTab, label: 'Chat', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
-          { tab: 'tools' as NavTab, label: 'Tools', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/></svg> },
-          { tab: 'saved' as NavTab, label: 'Saved', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> },
-          { tab: 'profile' as NavTab, label: 'Profile', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
-        ]).map(({ tab, label, icon }) => {
-          const isActive = (
+          { tab: 'home' as NavTab, label: 'Home',id: 'tour-welcome',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
+          { tab: 'chat' as NavTab, label: 'Chat',id: 'tour-chat',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
+          { tab: 'tools' as NavTab, label: 'Tools',id: 'tour-tools',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/></svg> },
+          { tab: 'saved' as NavTab, label: 'Saved',id: 'tour-saved',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> },
+          { tab: 'profile' as NavTab, label: 'Profile',id: 'tour-profile',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
+          ]).map(({ tab, label, icon, id }) => {
+            const isActive = (
             (tab === 'home' && isDashboard && !anyToolOpen && !showToolsMenu) ||
             (tab === 'chat' && isChat) ||
             (tab === 'tools' && (anyToolOpen || showToolsMenu)) ||
@@ -614,7 +618,7 @@ export default function App() {
             (tab === 'profile' && editingProfile)
           );
           return (
-            <button key={tab} onClick={() => handleTabChange(tab)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '10px 4px', border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', color: isActive ? ROSE : '#94a3b8', position: 'relative' }}>
+            <button key={tab} id={id}  onClick={() => handleTabChange(tab)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '10px 4px', border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', color: isActive ? ROSE : '#94a3b8', position: 'relative' }}>
               {icon}
               <span style={{ fontSize: 10, fontWeight: isActive ? 700 : 500 }}>{label}</span>
               {isActive && <div style={{ width: 4, height: 4, borderRadius: 2, background: ROSE, marginTop: 1 }} />}
