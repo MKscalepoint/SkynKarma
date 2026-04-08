@@ -16,6 +16,7 @@ interface DashboardProps {
   onOpenCheckProducts: () => void;
   onOpenScamCheck: () => void;
   onEditProfile: () => void;
+  onResetAll: () => void;
   onRoutineUpdate: (r: RoutineProduct[]) => void;
   onRegisterScrollToRoutine?: (fn: () => void) => void;
 }
@@ -68,7 +69,7 @@ const IconUser = ({ size = 18, color = TEAL }: { size?: number; color?: string }
 
 export default function Dashboard({
   profile, routine, onOpenChat, onOpenIngredients,
-  onOpenCheckProducts, onOpenScamCheck, onEditProfile, onRoutineUpdate, onRegisterScrollToRoutine,
+  onOpenCheckProducts, onOpenScamCheck, onEditProfile, onResetAll, onRoutineUpdate, onRegisterScrollToRoutine,
 }: DashboardProps) {
 
   const routineSectionRef = useRef<HTMLDivElement>(null);
@@ -392,6 +393,7 @@ export default function Dashboard({
             <div style={{ fontSize: 13, color: TEAL, fontWeight: 600, flexShrink: 0 }}>Set up →</div>
           </div>
         )}
+        <button onClick={onResetAll} style={{ background: 'none', border: 'none', padding: '6px 0 0', fontSize: 12, color: '#94a3b8', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>Reset everything</button>
 
       </div>
     </div>

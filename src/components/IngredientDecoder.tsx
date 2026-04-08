@@ -106,7 +106,11 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [followUpAnswer, setFollowUpAnswer] = useState('');
   const [isExample, setIsExample] = useState(true);
+  const [frontPhoto, setFrontPhoto] = useState<string | null>(null);
+  const [frontPhotoName, setFrontPhotoName] = useState('');
+  const [extractingName, setExtractingName] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const frontFileRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,6 +122,32 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
       const raw = (reader.result as string).split(',')[1];
       setPhoto(await compressImage(raw));
       setIsExample(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFrontPhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFrontPhotoName(file.name);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const raw = (reader.result as string).split(',')[1];
+      const compressed = await compressImage(raw);
+      setFrontPhoto(compressed);
+      setIsExample(false);
+      setExtractingName(true);
+      try {
+        const messages = [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: compressed } },
+          { type: 'text', text: 'Look at this product packaging photo and extract just the product name and brand. Return only the product name and brand, nothing else. No punctuation, no explanations.' },
+        ]}];
+        const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages }) });
+        const data = await res.json();
+        const name = data.content?.find((b: { type: string }) => b.type === 'text')?.text?.trim();
+        if (name) setProductName(name);
+      } catch { /* silently fail — user can type name manually */ }
+      finally { setExtractingName(false); }
     };
     reader.readAsDataURL(file);
   };
@@ -172,7 +202,8 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
 
   const resetForm = () => {
     setResult(null); setIngredients(EXAMPLE_INGREDIENTS); setProductName(EXAMPLE_PRODUCT);
-    setPhoto(null); setPhotoName(''); setFollowUpAnswer(''); setFollowUp(''); setIsExample(true);
+    setPhoto(null); setPhotoName(''); setFrontPhoto(null); setFrontPhotoName('');
+    setFollowUpAnswer(''); setFollowUp(''); setIsExample(true);
     setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50);
   };
 
@@ -215,15 +246,25 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
               </div>
 
               <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Product name <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span></label>
-                <input value={productName} onChange={e => { setProductName(e.target.value); setIsExample(false); }} placeholder="e.g. COSRX Snail 96 Mucin Essence" style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }} onFocus={e => e.target.style.borderColor = ROSE} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
+                  Product name <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional{inputMode === 'photo' ? ' — auto-filled from front photo' : ''})</span>
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input value={extractingName ? '' : productName} onChange={e => { setProductName(e.target.value); setIsExample(false); }} placeholder={extractingName ? '' : 'e.g. COSRX Snail 96 Mucin Essence'} disabled={extractingName} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', boxSizing: 'border-box', background: extractingName ? '#f8fafc' : '#fff' }} onFocus={e => { if (isExample) { setProductName(''); setIngredients(''); setIsExample(false); } e.target.style.borderColor = ROSE; }} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                  {extractingName && (
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', paddingLeft: 14, gap: 8, pointerEvents: 'none' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={ROSE} strokeWidth="2" strokeLinecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/></path></svg>
+                      <span style={{ fontSize: 14, color: '#94a3b8' }}>Reading product name…</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {inputMode === 'text' && (
                 <>
                   <div>
                     <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Ingredient list <span style={{ color: '#ef4444' }}>*</span></label>
-                    <textarea value={ingredients} onChange={e => { setIngredients(e.target.value); setIsExample(false); }} placeholder="Paste the full ingredient list here…" rows={5} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }} onFocus={e => e.target.style.borderColor = ROSE} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                    <textarea value={ingredients} onChange={e => { setIngredients(e.target.value); setIsExample(false); }} placeholder="Paste the full ingredient list here…" rows={5} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 16, fontFamily: 'inherit', color: '#0f172a', outline: 'none', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }} onFocus={e => { if (isExample) { setProductName(''); setIngredients(''); setIsExample(false); } e.target.style.borderColor = ROSE; }} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
                   </div>
                   <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                     <IconLightbulb size={14} /><span><strong>Tip:</strong> Find ingredient lists on brand websites, packaging, or apps like INCI Beauty or CosDNA.</span>
@@ -232,24 +273,48 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
               )}
 
               {inputMode === 'photo' && (
-                <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Photo of ingredient list <span style={{ color: '#ef4444' }}>*</span></label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <input ref={frontFileRef} type="file" accept="image/*" onChange={handleFrontPhotoSelect} style={{ display: 'none' }} />
                   <input ref={fileRef} type="file" accept="image/*" onChange={handlePhotoSelect} style={{ display: 'none' }} />
-                  {!photo ? (
-                    <button onClick={() => fileRef.current?.click()} style={{ width: '100%', padding: '28px 20px', border: '2px dashed #e2e8f0', borderRadius: 12, background: '#fafafa', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, fontFamily: 'inherit' }} onMouseEnter={e => { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.background = ROSE_LIGHT; }} onMouseLeave={e => { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.background = '#fafafa'; }}>
-                      <IconCamera size={32} color={ROSE} />
-                      <span style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}>Take a photo or upload from library</span>
-                      <span style={{ fontSize: 13, color: '#94a3b8' }}>Photo will be compressed automatically</span>
-                    </button>
-                  ) : (
-                    <div style={{ border: `1.5px solid ${ROSE}44`, borderRadius: 12, padding: '14px 16px', background: ROSE_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontSize: 16, color: ROSE }}>✓</span>
-                        <div><div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>Photo ready</div><div style={{ fontSize: 12, color: '#64748b' }}>{photoName}</div></div>
+
+                  {/* Front photo */}
+                  <div>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Front of product <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional — we&apos;ll read the product name)</span></label>
+                    {!frontPhoto ? (
+                      <button onClick={() => frontFileRef.current?.click()} style={{ width: '100%', padding: '16px 20px', border: '2px dashed #e2e8f0', borderRadius: 12, background: '#fafafa', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit', boxSizing: 'border-box' }} onMouseEnter={e => { e.currentTarget.style.borderColor = ROSE; e.currentTarget.style.background = ROSE_LIGHT; }} onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fafafa'; }}>
+                        <IconCamera size={22} color="#94a3b8" />
+                        <span style={{ fontSize: 14, color: '#64748b' }}>Upload front of packaging</span>
+                      </button>
+                    ) : (
+                      <div style={{ border: `1.5px solid ${ROSE}44`, borderRadius: 12, padding: '12px 16px', background: ROSE_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{ fontSize: 16, color: ROSE }}>✓</span>
+                          <div><div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>Front photo ready</div><div style={{ fontSize: 12, color: '#64748b' }}>{frontPhotoName}</div></div>
+                        </div>
+                        <button onClick={() => { setFrontPhoto(null); setFrontPhotoName(''); setProductName(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: ROSE, fontFamily: 'inherit', fontWeight: 600 }}>Remove</button>
                       </div>
-                      <button onClick={() => { setPhoto(null); setPhotoName(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: ROSE, fontFamily: 'inherit', fontWeight: 600 }}>Change</button>
-                    </div>
-                  )}
+                    )}
+                  </div>
+
+                  {/* Back/ingredients photo */}
+                  <div>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Back of product — ingredient list <span style={{ color: '#ef4444' }}>*</span></label>
+                    {!photo ? (
+                      <button onClick={() => fileRef.current?.click()} style={{ width: '100%', padding: '20px', border: '2px dashed #e2e8f0', borderRadius: 12, background: '#fafafa', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, fontFamily: 'inherit' }} onMouseEnter={e => { e.currentTarget.style.borderColor = ROSE; e.currentTarget.style.background = ROSE_LIGHT; }} onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fafafa'; }}>
+                        <IconCamera size={32} color={ROSE} />
+                        <span style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}>Take a photo or upload from library</span>
+                        <span style={{ fontSize: 13, color: '#94a3b8' }}>Photo will be compressed automatically</span>
+                      </button>
+                    ) : (
+                      <div style={{ border: `1.5px solid ${ROSE}44`, borderRadius: 12, padding: '12px 16px', background: ROSE_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{ fontSize: 16, color: ROSE }}>✓</span>
+                          <div><div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>Ingredients photo ready</div><div style={{ fontSize: 12, color: '#64748b' }}>{photoName}</div></div>
+                        </div>
+                        <button onClick={() => { setPhoto(null); setPhotoName(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: ROSE, fontFamily: 'inherit', fontWeight: 600 }}>Change</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

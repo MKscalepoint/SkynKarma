@@ -62,7 +62,7 @@ function AppFooter() {
       <p style={{ textAlign: 'center', fontSize: 11, color: '#cbd5e1', margin: 0, lineHeight: 1.5 }}>
         Skyn Karma provides general skincare guidance and is not a substitute for professional dermatological advice.{' '}
         Got feedback? We&apos;d love to hear it —{' '}
-        <a href="mailto:martinandmirella@gmail.com" style={{ color: '#94a3b8', textDecoration: 'none' }}>martinandmirella@gmail.com</a>
+        <a href="mailto:hello@skynkarma.com" style={{ color: '#94a3b8', textDecoration: 'none' }}>hello@skynkarma.com</a>
       </p>
     </div>
   );
@@ -439,6 +439,35 @@ export default function App() {
       {/* ── Main content ── */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
 
+
+        {/* Dashboard */}
+        {isDashboard && (
+        <>
+          <ProductTour onOpenChat={handleOpenChat} onOpenIngredients={() => setShowIngredients(true)} />
+          <Dashboard
+            profile={profile || { skinType: 'all skin types', concerns: [], experience: '', age: '', sensitivities: '', completed: false }}
+            routine={routine}
+            onOpenChat={handleOpenChat}
+            onOpenIngredients={() => setShowIngredients(true)}
+            onOpenCheckProducts={() => setShowCheckProducts(true)}
+            onOpenScamCheck={() => setShowScamCheck(true)}
+            onEditProfile={() => setEditingProfile(true)}
+            onResetAll={handleResetAll}
+            onRoutineUpdate={handleRoutineUpdate}
+            onRegisterScrollToRoutine={(fn) => { scrollToRoutineRef.current = fn; }}
+          />
+           </>
+        )}
+
+        {/* Saved Products */}
+        {isSaved && (
+          <SavedProducts
+            products={savedProducts}
+            country={profile?.country}
+            onProductsChange={handleSavedProductsChange}
+          />
+        )}
+
         {/* Session sidebar */}
         {isChat && (
           <div style={{ width: showSessions ? 260 : 0, overflow: 'hidden', transition: 'width 0.25s ease', borderRight: showSessions ? '1px solid #e2e8f0' : 'none', flexShrink: 0, display: 'flex', flexDirection: 'column', background: '#fafafa' }}>
@@ -469,33 +498,6 @@ export default function App() {
               <button onClick={handleResetAll} style={{ width: '100%', padding: '8px', background: 'transparent', border: '1px solid #fecaca', borderRadius: 8, color: '#ef4444', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Reset everything</button>
             </div>
           </div>
-        )}
-
-        {/* Dashboard */}
-        {isDashboard && (
-        <>
-          <ProductTour onOpenChat={handleOpenChat} onOpenIngredients={() => setShowIngredients(true)} />
-          <Dashboard
-            profile={profile || { skinType: 'all skin types', concerns: [], experience: '', age: '', sensitivities: '', completed: false }}
-            routine={routine}
-            onOpenChat={handleOpenChat}
-            onOpenIngredients={() => setShowIngredients(true)}
-            onOpenCheckProducts={() => setShowCheckProducts(true)}
-            onOpenScamCheck={() => setShowScamCheck(true)}
-            onEditProfile={() => setEditingProfile(true)}
-            onRoutineUpdate={handleRoutineUpdate}
-            onRegisterScrollToRoutine={(fn) => { scrollToRoutineRef.current = fn; }}
-          />
-           </>
-        )}
-
-        {/* Saved Products */}
-        {isSaved && (
-          <SavedProducts
-            products={savedProducts}
-            country={profile?.country}
-            onProductsChange={handleSavedProductsChange}
-          />
         )}
 
         {/* Chat */}

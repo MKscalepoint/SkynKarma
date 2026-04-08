@@ -419,7 +419,7 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
       {/* Footer */}
       <div style={{ padding: '24px 40px', textAlign: 'center', fontSize: 12, color: '#94a3b8', borderTop: '1px solid #f1f5f9' }}>
         Skyn Karma provides general skincare guidance and is not a substitute for professional dermatological advice.<br /><br />
-        Got feedback? We&apos;d love to hear it — <a href="mailto:martinandmirella@gmail.com" style={{ color: ROSE, textDecoration: 'none' }}>martinandmirella@gmail.com</a>
+        Got feedback? We&apos;d love to hear it — <a href="mailto:hello@skynkarma.com" style={{ color: ROSE, textDecoration: 'none' }}>hello@skynkarma.com</a>
       </div>
 
     </div>
