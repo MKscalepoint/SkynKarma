@@ -31,7 +31,7 @@ USER PROFILE:
       `${i + 1}. ${p.name} (${p.type})${p.ingredients ? `\n   Ingredients: ${p.ingredients}` : ''}`
     ).join('\n\n');
 
-    const prompt = `You are Skyn Karma, an expert skincare advisor. Analyse the following skincare products and provide a comprehensive compatibility report.
+    const prompt = `You are skynkarma, an expert skincare advisor. Analyse the following skincare products and provide a comprehensive compatibility report.
 ${profileContext}
 PRODUCTS TO ANALYSE:
 ${productList}

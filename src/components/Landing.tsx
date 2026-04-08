@@ -9,11 +9,11 @@ const FEEDBACK_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScN4D5-7D0YR
 const FAQS = [
   {
     q: "How is advice personalised to me?",
-    a: "When you first join, you answer 5 quick questions about your skin type, main concerns, experience level, age range, and any sensitivities. Skyn Karma uses that profile to tailor every single response — so if you have oily, acne-prone skin, you'll never get advice designed for dry or mature skin. The more you use it, the more context builds up, making recommendations increasingly specific to you."
+    a: "When you first join, you answer 5 quick questions about your skin type, main concerns, experience level, age range, and any sensitivities. skynkarma uses that profile to tailor every single response — so if you have oily, acne-prone skin, you'll never get advice designed for dry or mature skin. The more you use it, the more context builds up, making recommendations increasingly specific to you."
   },
   {
     q: "How accurate is the ingredient analysis?",
-    a: "Skyn Karma's ingredient knowledge is based on published dermatological research and widely accepted skincare science. It knows about ingredient interactions, pH sensitivities, active concentrations, and formulation considerations. That said, skincare science is always evolving and individual skin can be unpredictable — so we always recommend patch testing anything new, and seeing a dermatologist for persistent concerns. Think of Skyn Karma as a very well-read friend, not a replacement for a professional diagnosis."
+    a: "skynkarma's ingredient knowledge is based on published dermatological research and widely accepted skincare science. It knows about ingredient interactions, pH sensitivities, active concentrations, and formulation considerations. That said, skincare science is always evolving and individual skin can be unpredictable — so we always recommend patch testing anything new, and seeing a dermatologist for persistent concerns. Think of skynkarma as a very well-read friend, not a replacement for a professional diagnosis."
   },
   {
     q: "Is my data private and safe?",
@@ -21,15 +21,15 @@ const FAQS = [
   },
   {
     q: "Is it free? What does it cost?",
-    a: "Skyn Karma is currently free to use while we're in early access. We're gathering feedback from real users before deciding how to structure things long-term. If a paid tier is introduced, core features will always remain accessible for free — we believe everyone deserves good skincare guidance, not just people who can afford a dermatologist."
+    a: "skynkarma is currently free to use while we're in early access. We're gathering feedback from real users before deciding how to structure things long-term. If a paid tier is introduced, core features will always remain accessible for free — we believe everyone deserves good skincare guidance, not just people who can afford a dermatologist."
   },
   {
     q: "Is this real medical advice?",
-    a: "No — and we're upfront about that. Skyn Karma provides general skincare guidance based on ingredient science and best practices. It's not a substitute for a dermatologist, and it won't diagnose skin conditions. If you have a medical concern — persistent acne, rosacea, eczema, or anything that's getting worse — please see a qualified professional. What Skyn Karma is great at is helping you build a smart, safe routine and understand what you're putting on your skin."
+    a: "No — and we're upfront about that. skynkarma provides general skincare guidance based on ingredient science and best practices. It's not a substitute for a dermatologist, and it won't diagnose skin conditions. If you have a medical concern — persistent acne, rosacea, eczema, or anything that's getting worse — please see a qualified professional. What skynkarma is great at is helping you build a smart, safe routine and understand what you're putting on your skin."
   },
   {
     q: "Why not just use ChatGPT?",
-    a: "Great question — and honestly, you could. But here's the difference: ChatGPT is a blank slate every single time. It doesn't know your skin type, your concerns, your sensitivities, or what products you're already using. Skyn Karma builds a profile around you and carries that context into every conversation. It also has dedicated tools — like the ingredient decoder and compatibility checker — built specifically for skincare. Think of it as the difference between googling your symptoms and talking to a doctor who already knows your history."
+    a: "Great question — and honestly, you could. But here's the difference: ChatGPT is a blank slate every single time. It doesn't know your skin type, your concerns, your sensitivities, or what products you're already using. skynkarma builds a profile around you and carries that context into every conversation. It also has dedicated tools — like the ingredient decoder and compatibility checker — built specifically for skincare. Think of it as the difference between googling your symptoms and talking to a doctor who already knows your history."
   },
 ];
 function CookieBanner() {
@@ -175,7 +175,7 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: '#fff', fontSize: 13, fontWeight: 700,
           }}>SK</div>
-          <span style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.3px' }}>Skyn Karma</span>
+          <span style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.3px' }}>skynkarma</span>
         </div>
         {hasProfile && (
           <button onClick={onResume} style={{
@@ -202,7 +202,7 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
         </h1>
 
         <p style={{ fontSize: 19, color: '#64748b', lineHeight: 1.7, margin: '0 auto 40px', maxWidth: 560 }}>
-          Skyn Karma helps you build the right routine, understand your ingredients, and make confident choices — personalised to your skin type and concerns.
+          skynkarma helps you build the right routine, understand your ingredients, and make confident choices — personalised to your skin type and concerns.
         </p>
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -227,7 +227,7 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
       <div style={{ background: '#fafafa', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9', padding: '64px 40px' }}>
         <div style={{ maxWidth: 860, margin: '0 auto' }}>
           <h2 style={{ textAlign: 'center', fontSize: 30, fontWeight: 700, color: '#0f172a', margin: '0 0 48px', letterSpacing: '-0.5px' }}>
-            How Skyn Karma works
+            How skynkarma works
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24 }}>
             {[
@@ -285,7 +285,7 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
           borderRadius: 12, padding: '14px 24px', textAlign: 'center',
           fontSize: 14, color: ROSE, marginTop: 24,
         }}>
-          <strong>On the roadmap:</strong> skin journey tracking, monthly insight recaps, conversation memory and more — Skyn Karma gets smarter the longer you use it.
+          <strong>On the roadmap:</strong> skin journey tracking, monthly insight recaps, conversation memory and more — skynkarma gets smarter the longer you use it.
         </div>
       </div>
 
@@ -295,7 +295,7 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
           What you can ask
         </h2>
         <p style={{ textAlign: 'center', color: '#64748b', fontSize: 16, margin: '0 0 40px' }}>
-          Skyn Karma covers everything from basics to advanced skincare science.
+          skynkarma covers everything from basics to advanced skincare science.
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
           {[
@@ -361,7 +361,7 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
             fontWeight: 700, marginBottom: 16, letterSpacing: '0.5px', textTransform: 'uppercase',
           }}>Coming soon</div>
           <h2 style={{ fontSize: 26, fontWeight: 800, color: '#0f172a', margin: '0 0 12px', letterSpacing: '-0.5px' }}>
-            The Skyn Karma Journal
+            The skynkarma Journal
           </h2>
           <p style={{ fontSize: 15, color: '#64748b', lineHeight: 1.7, margin: '0 auto', maxWidth: 480 }}>
             Ingredient deep-dives, how-to guides, routine inspiration, and skincare science — written in plain English for real people.
@@ -418,7 +418,7 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
       <CookieBanner />
       {/* Footer */}
       <div style={{ padding: '24px 40px', textAlign: 'center', fontSize: 12, color: '#94a3b8', borderTop: '1px solid #f1f5f9' }}>
-        Skyn Karma provides general skincare guidance and is not a substitute for professional dermatological advice.<br /><br />
+        skynkarma provides general skincare guidance and is not a substitute for professional dermatological advice.<br /><br />
         Got feedback? We&apos;d love to hear it — <a href="mailto:hello@skynkarma.com" style={{ color: ROSE, textDecoration: 'none' }}>hello@skynkarma.com</a>
       </div>
 

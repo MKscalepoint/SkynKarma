@@ -239,7 +239,7 @@ if (question.field === 'skinType' && option.includes('not sure')) {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: '#fff', fontSize: 12, fontWeight: 700,
           }}>SK</div>
-          <span style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.3px' }}>Skyn Karma</span>
+          <span style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.3px' }}>skynkarma</span>
         </button>
         <span style={{ fontSize: 13, color: '#94a3b8' }}>
           {editMode ? 'Editing your profile' : 'Building your skin profile'}

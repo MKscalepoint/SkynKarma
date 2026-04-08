@@ -32,13 +32,13 @@ const SUGGESTIONS = [
   'Explain skin cycling to me',
 ];
 
-const WELCOME_WITH_PROFILE = `Welcome to Skyn Karma. I've reviewed your skin profile and I'm ready to help.
+const WELCOME_WITH_PROFILE = `Welcome to skynkarma. I've reviewed your skin profile and I'm ready to help.
 
 I can assist with ingredient compatibility, routine building, product recommendations, and anything else skincare-related. All my advice is tailored to your specific skin type and concerns.
 
 What would you like to explore today?`;
 
-const WELCOME_NO_PROFILE = `Welcome to Skyn Karma! I'm your personal skincare advisor.
+const WELCOME_NO_PROFILE = `Welcome to skynkarma! I'm your personal skincare advisor.
 
 I can help with ingredient compatibility, routine building, product recommendations, and all things skincare. To get personalised advice tailored to your skin type and concerns, tap **Profile** to set up your skin profile — it only takes 2 minutes.
 
@@ -60,7 +60,7 @@ function AppFooter() {
   return (
     <div className="hide-mobile" style={{ borderTop: '1px solid #f1f5f9', padding: '12px 24px', background: '#ffffff', flexShrink: 0 }}>
       <p style={{ textAlign: 'center', fontSize: 11, color: '#cbd5e1', margin: 0, lineHeight: 1.5 }}>
-        Skyn Karma provides general skincare guidance and is not a substitute for professional dermatological advice.{' '}
+        skynkarma provides general skincare guidance and is not a substitute for professional dermatological advice.{' '}
         Got feedback? We&apos;d love to hear it —{' '}
         <a href="mailto:hello@skynkarma.com" style={{ color: '#94a3b8', textDecoration: 'none' }}>hello@skynkarma.com</a>
       </p>
@@ -368,7 +368,7 @@ export default function App() {
           <button onClick={() => setView('landing')} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             <div style={{ width: 30, height: 30, borderRadius: 8, background: ROSE, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700 }}>SK</div>
             <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', lineHeight: 1.2, textAlign: 'left' }}>Skyn Karma</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', lineHeight: 1.2, textAlign: 'left' }}>skynkarma</div>
               <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1 }}>
                 {isChat ? 'Skin Advisor' : isSaved ? 'Saved Products' : 'Dashboard'}
               </div>

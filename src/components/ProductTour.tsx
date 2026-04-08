@@ -38,7 +38,7 @@ export default function ProductTour({ onOpenChat, onOpenIngredients }: ProductTo
       steps: [
         {
           popover: {
-            title: '👋 Welcome to Skyn Karma!',
+            title: '👋 Welcome to skynkarma!',
             description: "We're your personal AI skincare advisor. Let us show you around — it'll take less than a minute.",
             side: 'bottom',
             align: 'center',

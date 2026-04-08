@@ -181,7 +181,7 @@ export default function Dashboard({
               color: '#fff', fontWeight: 800, fontSize: 17,
             }}>S</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginBottom: 3 }}>Ask Skyn Karma</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginBottom: 3 }}>Ask skynkarma</div>
               <div style={{ fontSize: 13, color: '#64748b', marginBottom: 14, lineHeight: 1.5 }}>
                 {profile.completed
                   ? `Personalised advice based on your ${Array.isArray(profile.skinType) ? profile.skinType.join(', ').toLowerCase() : profile.skinType?.toLowerCase()} skin profile`

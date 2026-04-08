@@ -166,10 +166,10 @@ export default function IngredientDecoder({ profile, onClose }: IngredientDecode
       if (inputMode === 'photo' && photo) {
         messages = [{ role: 'user', content: [
           { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: photo } },
-          { type: 'text', text: `You are Skyn Karma, an expert skincare advisor.\n\n${profileContext}\nProduct: ${productName || 'Unknown'}\n\nExtract the ingredient list from the image then analyse:\n1. **Key active ingredients** — what they do\n2. **Ingredients to note** — issues for this skin type\n3. **Best for** — skin types and concerns\n4. **Overall verdict** — well-formulated?\n5. **Compatibility tip** — layering advice\n\nBold key ingredient names.` }
+          { type: 'text', text: `You are skynkarma, an expert skincare advisor.\n\n${profileContext}\nProduct: ${productName || 'Unknown'}\n\nExtract the ingredient list from the image then analyse:\n1. **Key active ingredients** — what they do\n2. **Ingredients to note** — issues for this skin type\n3. **Best for** — skin types and concerns\n4. **Overall verdict** — well-formulated?\n5. **Compatibility tip** — layering advice\n\nBold key ingredient names.` }
         ]}];
       } else {
-        messages = [{ role: 'user', content: `You are Skyn Karma, an expert skincare advisor.\n\n${profileContext}\nProduct: ${productName || 'Unknown'}\nIngredients: ${ingredients}\n\nAnalyse:\n1. **Key active ingredients** — what they do\n2. **Ingredients to note** — issues for this skin type\n3. **Best for** — skin types and concerns\n4. **Overall verdict** — well-formulated?\n5. **Compatibility tip** — layering advice\n\nBe honest, specific, practical. Bold key ingredient names.` }];
+        messages = [{ role: 'user', content: `You are skynkarma, an expert skincare advisor.\n\n${profileContext}\nProduct: ${productName || 'Unknown'}\nIngredients: ${ingredients}\n\nAnalyse:\n1. **Key active ingredients** — what they do\n2. **Ingredients to note** — issues for this skin type\n3. **Best for** — skin types and concerns\n4. **Overall verdict** — well-formulated?\n5. **Compatibility tip** — layering advice\n\nBe honest, specific, practical. Bold key ingredient names.` }];
       }
       const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages, profile }) });
       const data = await res.json();

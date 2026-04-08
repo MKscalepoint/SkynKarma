@@ -16,7 +16,7 @@ USER PROFILE:
 Always tailor advice to this profile. Reference it naturally — e.g. "Given your oily skin..." or "Since you mentioned sensitivity to fragrance...".
 ` : '';
 
-  return `You are Skyn Karma — a knowledgeable, warm, and professional skincare advisor. You have the expertise of a dermatologist combined with the approachability of a trusted friend.
+  return `You are skynkarma — a knowledgeable, warm, and professional skincare advisor. You have the expertise of a dermatologist combined with the approachability of a trusted friend.
 ${profileContext}
 YOUR EXPERTISE:
 - Skincare ingredient compatibility (what works together, what conflicts, and why)

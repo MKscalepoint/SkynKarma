@@ -138,7 +138,7 @@ export default function ScamCheck({ profile, onClose }: ScamCheckProps) {
   const handleCheck = async () => {
     if (!productName.trim() && !photo) return;
     setLoading(true); setVerdict(null); setError(''); setFollowUpAnswer('');
-    const prompt = `You are Skyn Karma's product authenticity expert. Respond ONLY with valid JSON — no markdown, no text outside the JSON.
+    const prompt = `You are skynkarma's product authenticity expert. Respond ONLY with valid JSON — no markdown, no text outside the JSON.
 
 Product: ${productName || 'Unknown'}
 Claims: ${brandClaim || 'Not provided'}
@@ -268,7 +268,7 @@ JSON:
               </div>
 
               <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                <IconLightbulb size={14} color={ROSE} /><span><strong>Tip:</strong> Screenshot a TikTok or Instagram ad and upload it — Skyn Karma will read the claims and cross-reference against skincare science.</span>
+                <IconLightbulb size={14} color={ROSE} /><span><strong>Tip:</strong> Screenshot a TikTok or Instagram ad and upload it — skynkarma will read the claims and cross-reference against skincare science.</span>
               </div>
               {error && <div style={{ color: '#ef4444', fontSize: 13 }}>{error}</div>}
             </div>
