@@ -120,6 +120,7 @@ export default function App() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const lastAssistantRef = useRef<HTMLDivElement>(null);
   const scrollToRoutineRef = useRef<(() => void) | null>(null);
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const savedProfile = getProfile();
@@ -277,6 +278,16 @@ export default function App() {
       setView('chat');
       setActiveTab('chat');
     }
+    setTimeout(() => chatInputRef.current?.focus(), 50);
+  };
+
+  const handleOpenSession = (session: ChatSession) => {
+    setMessages(session.messages);
+    setActiveId(session.id);
+    setActiveSessionId(session.id);
+    setView('chat');
+    setActiveTab('chat');
+    setTimeout(() => chatInputRef.current?.focus(), 50);
   };
 
   const confirmStartOver = () => {
@@ -447,7 +458,9 @@ export default function App() {
           <Dashboard
             profile={profile || { skinType: 'all skin types', concerns: [], experience: '', age: '', sensitivities: '', completed: false }}
             routine={routine}
+            sessions={sessions}
             onOpenChat={handleOpenChat}
+            onOpenSession={handleOpenSession}
             onOpenIngredients={() => setShowIngredients(true)}
             onOpenCheckProducts={() => setShowCheckProducts(true)}
             onOpenScamCheck={() => setShowScamCheck(true)}
@@ -566,7 +579,7 @@ export default function App() {
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, background: '#f8fafc', borderRadius: 14, border: '1.5px solid #e2e8f0', padding: '12px 12px 12px 18px' }}
                   onFocusCapture={e => (e.currentTarget as HTMLDivElement).style.borderColor = ROSE}
                   onBlurCapture={e => (e.currentTarget as HTMLDivElement).style.borderColor = '#e2e8f0'}>
-                  <textarea rows={1} value={input}
+                  <textarea ref={chatInputRef} rows={1} value={input}
                     onChange={e => { setInput(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'; }}
                     onKeyDown={handleKey}
                     placeholder="Ask about ingredients, compatibility, routines…"

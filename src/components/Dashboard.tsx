@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { UserProfile, RoutineProduct } from '@/types';
+import { UserProfile, RoutineProduct, ChatSession } from '@/types';
 import { generateId } from '@/lib/storage';
 
 const TEAL = '#b5737a';
@@ -11,7 +11,9 @@ const TEAL_MID = '#f2d0d3';
 interface DashboardProps {
   profile: UserProfile;
   routine: RoutineProduct[];
+  sessions: ChatSession[];
   onOpenChat: (initialMessage?: string) => void;
+  onOpenSession: (session: ChatSession) => void;
   onOpenIngredients: () => void;
   onOpenCheckProducts: () => void;
   onOpenScamCheck: () => void;
@@ -68,7 +70,7 @@ const IconUser = ({ size = 18, color = TEAL }: { size?: number; color?: string }
 );
 
 export default function Dashboard({
-  profile, routine, onOpenChat, onOpenIngredients,
+  profile, routine, sessions, onOpenChat, onOpenSession, onOpenIngredients,
   onOpenCheckProducts, onOpenScamCheck, onEditProfile, onResetAll, onRoutineUpdate, onRegisterScrollToRoutine,
 }: DashboardProps) {
 
@@ -212,6 +214,19 @@ export default function Dashboard({
                   }}>{s}</button>
                 ))}
               </div>
+              {sessions.length > 0 && (
+                <div style={{ marginTop: 14, borderTop: '1px solid #f1f5f9', paddingTop: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Recent</div>
+                  {sessions.slice(0, 3).map(s => (
+                    <div key={s.id} onClick={() => onOpenSession(s)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid #f8fafc', cursor: 'pointer', gap: 8 }}
+                      onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.opacity = '0.7'}
+                      onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.opacity = '1'}>
+                      <span style={{ fontSize: 13, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{s.title}</span>
+                      <span style={{ fontSize: 11, color: '#94a3b8', flexShrink: 0 }}>{new Date(s.updatedAt).toLocaleDateString()}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
