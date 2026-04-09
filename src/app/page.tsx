@@ -10,7 +10,7 @@ import {
 import Landing from '@/components/Landing';
 import Onboarding from '@/components/Onboarding';
 import Dashboard from '@/components/Dashboard';
-import SavedProducts from '@/components/SavedProducts';
+import MySpace from '@/components/MySpace';
 import IngredientDecoder from '@/components/IngredientDecoder';
 import CheckProducts from '@/components/CheckProducts';
 import ScamCheck from '@/components/ScamCheck';
@@ -20,7 +20,7 @@ const ROSE = '#b5737a';
 const ROSE_LIGHT = '#fdf2f3';
 const FEEDBACK_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScN4D5-7D0YRyqRf_7Z5ehVDVuBeo9JPxJC7GTGx3GqPeym_g/viewform?usp=header';
 
-type View = 'landing' | 'onboarding' | 'dashboard' | 'chat' | 'saved';
+type View = 'landing' | 'onboarding' | 'dashboard' | 'chat' | 'myspace';
 
 const SUGGESTIONS = [
   'Help me build my skin care routine',
@@ -40,7 +40,7 @@ What would you like to explore today?`;
 
 const WELCOME_NO_PROFILE = `Welcome to skynkarma! I'm your personal skincare advisor.
 
-I can help with ingredient compatibility, routine building, product recommendations, and all things skincare. To get personalised advice tailored to your skin type and concerns, tap **Profile** to set up your skin profile — it only takes 2 minutes.
+I can help with ingredient compatibility, routine building, product recommendations, and all things skincare. To get personalised advice tailored to your skin type and concerns, tap **My Space** to set up your skin profile — it only takes 2 minutes.
 
 For now, feel free to ask me anything!`;
 
@@ -79,7 +79,7 @@ function BetaBanner() {
       gap: 12, flexShrink: 0, position: 'relative', flexWrap: 'wrap',
     }}>
       <span style={{ fontSize: 13, textAlign: 'center' }}>
-        👋 You're one of our first users — tell us what you think.{' '}
+        👋 You&apos;re one of our first users — tell us what you think.{' '}
         <a href={FEEDBACK_FORM_URL} target="_blank" rel="noopener noreferrer"
           style={{ color: '#b5737a', fontWeight: 700, textDecoration: 'none' }}>
           Share your thoughts →
@@ -95,7 +95,7 @@ function BetaBanner() {
   );
 }
 
-type NavTab = 'home' | 'chat' | 'tools' | 'saved' | 'profile';
+type NavTab = 'home' | 'chat' | 'myspace' | 'tools';
 
 export default function App() {
   const [view, setView] = useState<View>('landing');
@@ -322,8 +322,7 @@ export default function App() {
     if (tab === 'home') { setView('dashboard'); setShowToolsMenu(false); }
     else if (tab === 'chat') { setView('chat'); setShowToolsMenu(false); }
     else if (tab === 'tools') { setShowToolsMenu(s => !s); }
-    else if (tab === 'saved') { setView('saved'); setShowToolsMenu(false);setSavedProducts(getSavedProducts()); }
-    else if (tab === 'profile') { setEditingProfile(true); setShowToolsMenu(false); }
+    else if (tab === 'myspace') { setView('myspace'); setShowToolsMenu(false); setSavedProducts(getSavedProducts()); }
   };
 
   useEffect(() => {
@@ -351,22 +350,23 @@ export default function App() {
     return (
       <Onboarding
         onComplete={handleProfileComplete}
-        onHome={() => { setEditingProfile(false); setView(view === 'dashboard' || view === 'chat' || view === 'saved' ? view : 'landing'); }}
+        onHome={() => { setEditingProfile(false); setView(view === 'dashboard' || view === 'chat' || view === 'myspace' ? view : 'landing'); }}
         initialProfile={editingProfile ? profile : null}
         editMode={editingProfile}
       />
     );
   }
 
-  // ── Dashboard + Chat + Saved ──────────────────────────────────
+  // ── Main app views ──────────────────────────────────────────
   const isDashboard = view === 'dashboard';
   const isChat = view === 'chat';
-  const isSaved = view === 'saved';
+  const isMySpace = view === 'myspace';
   const anyToolOpen = showIngredients || showCheckProducts || showScamCheck;
 
   return (
     <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'DM Sans', system-ui, sans-serif", background: '#ffffff' }}>
       <BetaBanner />
+
       {/* ── Header ── */}
       <header style={{ padding: '0 20px', height: 58, borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff', flexShrink: 0, zIndex: 40 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -381,7 +381,7 @@ export default function App() {
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', lineHeight: 1.2, textAlign: 'left' }}>skynkarma</div>
               <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1 }}>
-                {isChat ? 'Skin Advisor' : isSaved ? 'Saved Products' : 'Dashboard'}
+                {isChat ? 'Skin Advisor' : isMySpace ? 'My Space' : 'Dashboard'}
               </div>
             </div>
           </button>
@@ -391,12 +391,15 @@ export default function App() {
           {/* Desktop nav */}
           <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <button id="tour-welcome" onClick={() => { setView('dashboard'); setActiveTab('home'); }} style={{ padding: '6px 12px', background: isDashboard && !anyToolOpen ? ROSE : 'transparent', border: `1px solid ${isDashboard && !anyToolOpen ? ROSE : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, color: isDashboard && !anyToolOpen ? '#fff' : '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}>Home</button>
-<button id="tour-profile" onClick={() => setEditingProfile(true)} style={{ padding: '6px 12px', background: 'transparent', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}
-              onMouseEnter={e => { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.color = ROSE; }}
-              onMouseLeave={e => { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.color = '#64748b'; }}>
-              {profile ? 'Profile' : 'Set up profile'}
-            </button>
+
             <button id="tour-chat" onClick={() => { setView('chat'); setActiveTab('chat'); }} style={{ padding: '6px 12px', background: isChat ? ROSE : 'transparent', border: `1px solid ${isChat ? ROSE : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, color: isChat ? '#fff' : '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}>Chat</button>
+
+            <button id="tour-myspace" onClick={() => { setView('myspace'); setActiveTab('myspace'); setSavedProducts(getSavedProducts()); }} style={{ padding: '6px 12px', background: isMySpace ? ROSE : 'transparent', border: `1px solid ${isMySpace ? ROSE : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, color: isMySpace ? '#fff' : '#64748b', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 5 }}
+              onMouseEnter={e => { if (!isMySpace) { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.color = ROSE; } }}
+              onMouseLeave={e => { if (!isMySpace) { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.color = '#64748b'; } }}>
+              My Space
+              {savedProducts.length > 0 && <span style={{ background: isMySpace ? 'rgba(255,255,255,0.3)' : ROSE, color: '#fff', borderRadius: 10, padding: '1px 6px', fontSize: 11, fontWeight: 700 }}>{savedProducts.length}</span>}
+            </button>
 
             <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
               <button id="tour-tools" onClick={() => setShowToolsMenu(s => !s)} style={{ padding: '6px 12px', background: anyToolOpen ? ROSE : 'transparent', border: `1px solid ${anyToolOpen ? ROSE : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, color: anyToolOpen ? '#fff' : '#64748b', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -419,15 +422,6 @@ export default function App() {
                 </div>
               )}
             </div>
-
-            <button id="tour-saved" onClick={() => { setView('saved'); setActiveTab('saved'); }} style={{ padding: '6px 12px', background: isSaved ? ROSE : 'transparent', border: `1px solid ${isSaved ? ROSE : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, color: isSaved ? '#fff' : '#64748b', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 5 }}
-              onMouseEnter={e => { if (!isSaved) { (e.currentTarget).style.borderColor = ROSE; (e.currentTarget).style.color = ROSE; } }}
-              onMouseLeave={e => { if (!isSaved) { (e.currentTarget).style.borderColor = '#e2e8f0'; (e.currentTarget).style.color = '#64748b'; } }}>
-              Saved
-              {savedProducts.length > 0 && <span style={{ background: isSaved ? 'rgba(255,255,255,0.3)' : ROSE, color: '#fff', borderRadius: 10, padding: '1px 6px', fontSize: 11, fontWeight: 700 }}>{savedProducts.length}</span>}
-            </button>
-
-            
           </div>
 
           {/* Mobile menu */}
@@ -436,9 +430,6 @@ export default function App() {
               <button onClick={() => setShowMobileMenu(s => !s)} style={{ width: 36, height: 36, borderRadius: 8, background: showMobileMenu ? '#0f172a' : '#f8fafc', border: `1px solid ${showMobileMenu ? '#0f172a' : '#e2e8f0'}`, cursor: 'pointer', color: showMobileMenu ? '#fff' : '#64748b', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⋯</button>
               {showMobileMenu && (
                 <div style={{ position: 'absolute', right: 0, top: 44, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 200, minWidth: 160, overflow: 'hidden' }}>
-                  <button onClick={() => { setEditingProfile(true); setShowMobileMenu(false); }} style={{ width: '100%', padding: '12px 16px', background: 'transparent', border: 'none', borderBottom: '1px solid #f1f5f9', fontSize: 14, color: '#0f172a', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>
-                    {profile ? '✎ Edit profile' : '✎ Set up profile'}
-                  </button>
                   <button onClick={() => { handleResetAll(); setShowMobileMenu(false); }} style={{ width: '100%', padding: '12px 16px', background: 'transparent', border: 'none', fontSize: 14, color: '#ef4444', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>Reset everything</button>
                 </div>
               )}
@@ -450,34 +441,39 @@ export default function App() {
       {/* ── Main content ── */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
 
-
         {/* Dashboard */}
         {isDashboard && (
-        <>
-          <ProductTour onOpenChat={handleOpenChat} onOpenIngredients={() => setShowIngredients(true)} />
-          <Dashboard
-            profile={profile || { skinType: 'all skin types', concerns: [], experience: '', age: '', sensitivities: '', completed: false }}
-            routine={routine}
-            sessions={sessions}
-            onOpenChat={handleOpenChat}
-            onOpenSession={handleOpenSession}
-            onOpenIngredients={() => setShowIngredients(true)}
-            onOpenCheckProducts={() => setShowCheckProducts(true)}
-            onOpenScamCheck={() => setShowScamCheck(true)}
-            onEditProfile={() => setEditingProfile(true)}
-            onResetAll={handleResetAll}
-            onRoutineUpdate={handleRoutineUpdate}
-            onRegisterScrollToRoutine={(fn) => { scrollToRoutineRef.current = fn; }}
-          />
-           </>
+          <>
+            <ProductTour onOpenChat={handleOpenChat} onOpenIngredients={() => setShowIngredients(true)} />
+            <Dashboard
+              profile={profile || { skinType: 'all skin types', concerns: [], experience: '', age: '', sensitivities: '', completed: false }}
+              routine={routine}
+              sessions={sessions}
+              onOpenChat={handleOpenChat}
+              onOpenSession={handleOpenSession}
+              onOpenIngredients={() => setShowIngredients(true)}
+              onOpenCheckProducts={() => setShowCheckProducts(true)}
+              onOpenScamCheck={() => setShowScamCheck(true)}
+              onEditProfile={() => setEditingProfile(true)}
+              onResetAll={handleResetAll}
+              onOpenMySpace={() => { setView('myspace'); setActiveTab('myspace'); }}
+              onRoutineUpdate={handleRoutineUpdate}
+              onRegisterScrollToRoutine={(fn) => { scrollToRoutineRef.current = fn; }}
+            />
+          </>
         )}
 
-        {/* Saved Products */}
-        {isSaved && (
-          <SavedProducts
-            products={savedProducts}
+        {/* My Space */}
+        {isMySpace && (
+          <MySpace
+            profile={profile}
+            routine={routine}
+            savedProducts={savedProducts}
             country={profile?.country}
-            onProductsChange={handleSavedProductsChange}
+            onEditProfile={() => setEditingProfile(true)}
+            onRoutineUpdate={handleRoutineUpdate}
+            onSavedProductsChange={handleSavedProductsChange}
+            onResetAll={handleResetAll}
           />
         )}
 
@@ -616,28 +612,26 @@ export default function App() {
       )}
       {showToolsMenu && <div className="show-mobile" style={{ position: 'fixed', inset: 0, zIndex: 290, background: 'rgba(0,0,0,0.2)' }} onClick={() => setShowToolsMenu(false)} />}
 
-      {/* Mobile bottom nav */}
+      {/* Mobile bottom nav — 4 tabs */}
       <div className="show-mobile" style={{ display: 'flex', alignItems: 'center', borderTop: '1px solid #e2e8f0', background: '#fff', flexShrink: 0, zIndex: 310, paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {([
-          { tab: 'home' as NavTab, label: 'Home',id: 'mob-tour-welcome',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
-          { tab: 'profile' as NavTab, label: 'Profile',id: 'mob-tour-profile',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
-          { tab: 'chat' as NavTab, label: 'Chat',id: 'mob-tour-chat',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
-          { tab: 'tools' as NavTab, label: 'Tools',id: 'mob-tour-tools',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/></svg> },
-          { tab: 'saved' as NavTab, label: 'Saved',id: 'mob-tour-saved',icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> },
-          ]).map(({ tab, label, icon, id }) => {
-            const isActive = (
+          { tab: 'home' as NavTab, label: 'Home', id: 'mob-tour-welcome', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
+          { tab: 'chat' as NavTab, label: 'Chat', id: 'mob-tour-chat', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
+          { tab: 'myspace' as NavTab, label: 'My Space', id: 'mob-tour-myspace', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
+          { tab: 'tools' as NavTab, label: 'Tools', id: 'mob-tour-tools', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/></svg> },
+        ]).map(({ tab, label, icon, id }) => {
+          const isActive = (
             (tab === 'home' && isDashboard && !anyToolOpen && !showToolsMenu) ||
             (tab === 'chat' && isChat) ||
-            (tab === 'tools' && (anyToolOpen || showToolsMenu)) ||
-            (tab === 'saved' && isSaved) ||
-            (tab === 'profile' && editingProfile)
+            (tab === 'myspace' && isMySpace) ||
+            (tab === 'tools' && (anyToolOpen || showToolsMenu))
           );
           return (
-            <button key={tab} id={id}  onClick={() => handleTabChange(tab)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '10px 4px', border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', color: isActive ? ROSE : '#94a3b8', position: 'relative' }}>
+            <button key={tab} id={id} onClick={() => handleTabChange(tab)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '10px 4px', border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', color: isActive ? ROSE : '#94a3b8', position: 'relative' }}>
               {icon}
               <span style={{ fontSize: 10, fontWeight: isActive ? 700 : 500 }}>{label}</span>
               {isActive && <div style={{ width: 4, height: 4, borderRadius: 2, background: ROSE, marginTop: 1 }} />}
-              {tab === 'saved' && savedProducts.length > 0 && !isActive && (
+              {tab === 'myspace' && savedProducts.length > 0 && !isActive && (
                 <div style={{ position: 'absolute', top: 8, right: '50%', transform: 'translateX(8px)', width: 8, height: 8, borderRadius: '50%', background: ROSE }} />
               )}
             </button>
@@ -650,6 +644,7 @@ export default function App() {
       {showIngredients && <IngredientDecoder profile={profile} onClose={() => { setShowIngredients(false); setSavedProducts(getSavedProducts()); }} />}
       {showCheckProducts && <CheckProducts profile={profile} onClose={() => { setShowCheckProducts(false); setSavedProducts(getSavedProducts()); }} />}
       {showScamCheck && <ScamCheck profile={profile} onClose={() => { setShowScamCheck(false); setSavedProducts(getSavedProducts()); }} />}
+
       <style>{`
         @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
         * { box-sizing: border-box; }
