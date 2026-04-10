@@ -461,6 +461,7 @@ export default function App() {
               onResetAll={handleResetAll}
               onOpenMySpace={(tab) => { setView('myspace'); setActiveTab('myspace'); setMySpaceTab(tab || 'profile'); setSavedProducts(getSavedProducts()); }}
               onRegisterScrollToRoutine={(fn) => { scrollToRoutineRef.current = fn; }}
+              onRoutineUpdate={handleRoutineUpdate}
             />
           </>
         )}
