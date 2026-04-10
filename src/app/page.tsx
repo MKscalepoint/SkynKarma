@@ -59,10 +59,12 @@ function formatMessage(text: string) {
 function AppFooter() {
   return (
     <div className="hide-mobile" style={{ borderTop: '1px solid #f1f5f9', padding: '12px 24px', background: '#ffffff', flexShrink: 0 }}>
-      <p style={{ textAlign: 'center', fontSize: 11, color: '#cbd5e1', margin: 0, lineHeight: 1.5 }}>
+      <p style={{ textAlign: 'center', fontSize: 12, color: '#64748b', margin: 0, lineHeight: 1.5 }}>
         skynkarma provides general skincare guidance and is not a substitute for professional dermatological advice.{' '}
-        Got feedback? We&apos;d love to hear it —{' '}
-        <a href="mailto:hello@skynkarma.com" style={{ color: '#94a3b8', textDecoration: 'none' }}>hello@skynkarma.com</a>
+        Got feedback?{' '}
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLScN4D5-7D0YRyqRf_7Z5ehVDVuBeo9JPxJC7GTGx3GqPeym_g/viewform?usp=header" target="_blank" rel="noopener noreferrer" style={{ color: '#b5737a', fontWeight: 600, textDecoration: 'none' }}>Share your thoughts</a>
+        {' '}or email{' '}
+        <a href="mailto:hello@skynkarma.com" style={{ color: '#b5737a', fontWeight: 600, textDecoration: 'none' }}>hello@skynkarma.com</a>
       </p>
     </div>
   );
@@ -121,6 +123,7 @@ export default function App() {
   const lastAssistantRef = useRef<HTMLDivElement>(null);
   const scrollToRoutineRef = useRef<(() => void) | null>(null);
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
+  const [mySpaceTab, setMySpaceTab] = useState<'profile' | 'routine' | 'saved'>('profile');
 
   useEffect(() => {
     const savedProfile = getProfile();
@@ -456,8 +459,7 @@ export default function App() {
               onOpenScamCheck={() => setShowScamCheck(true)}
               onEditProfile={() => setEditingProfile(true)}
               onResetAll={handleResetAll}
-              onOpenMySpace={() => { setView('myspace'); setActiveTab('myspace'); }}
-              onRoutineUpdate={handleRoutineUpdate}
+              onOpenMySpace={(tab) => { setView('myspace'); setActiveTab('myspace'); setMySpaceTab(tab || 'profile'); setSavedProducts(getSavedProducts()); }}
               onRegisterScrollToRoutine={(fn) => { scrollToRoutineRef.current = fn; }}
             />
           </>
@@ -474,6 +476,8 @@ export default function App() {
             onRoutineUpdate={handleRoutineUpdate}
             onSavedProductsChange={handleSavedProductsChange}
             onResetAll={handleResetAll}
+            initialTab={mySpaceTab}
+            onOpenChat={handleOpenChat}
           />
         )}
 

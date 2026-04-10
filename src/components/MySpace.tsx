@@ -19,6 +19,8 @@ interface MySpaceProps {
   onRoutineUpdate: (r: RoutineProduct[]) => void;
   onSavedProductsChange: (products: SavedProduct[]) => void;
   onResetAll: () => void;
+  initialTab?: 'profile' | 'routine' | 'saved';
+  onOpenChat: (message?: string) => void;
 }
 
 const IconUser = ({ size = 18, color = ROSE }: { size?: number; color?: string }) => (
@@ -219,10 +221,11 @@ function ProductCard({
 export default function MySpace({
   profile, routine, savedProducts: initialSavedProducts, country,
   onEditProfile, onRoutineUpdate, onSavedProductsChange, onResetAll,
+  initialTab, onOpenChat,
 }: MySpaceProps) {
-  const [tab, setTab] = useState<'profile' | 'routine' | 'saved'>('profile');
-
-  // Routine tab state
+const [tab, setTab] = useState<'profile' | 'routine' | 'saved'>(initialTab || 'profile');
+ 
+// Routine tab state
   const [addingProduct, setAddingProduct] = useState(false);
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState('Serum');
@@ -279,7 +282,7 @@ export default function MySpace({
     setSavedProducts(updated);
     onSavedProductsChange(updated);
   };
-
+  
   return (
     <div style={{ flex: 1, overflowY: 'auto', background: '#f8fafc', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '28px 20px 40px' }}>
@@ -425,7 +428,16 @@ export default function MySpace({
                   </button>
                 ))}
               </div>
-
+<div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+  {['Help me build my skincare routine', 'What order should I apply my products?', 'What should I add to my routine?'].map((s, i) => (
+    <button key={i} onClick={() => onOpenChat(s)} style={{
+      background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`,
+      color: ROSE, fontSize: 12, fontWeight: 500,
+      padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
+      fontFamily: 'inherit', whiteSpace: 'nowrap',
+    }}>{s}</button>
+  ))}
+</div>
               {/* Add product form */}
               {addingProduct && (
                 <div style={{ background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`, borderRadius: 12, padding: '14px', marginBottom: 12 }}>
@@ -527,7 +539,16 @@ export default function MySpace({
                 <IconBookmark size={16} color="#fff" /> Save a product
               </button>
             )}
-
+<div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+  {['Help me find a good moisturiser', 'What products are good for oily skin?'].map((s, i) => (
+    <button key={i} onClick={() => onOpenChat(s)} style={{
+      background: ROSE_LIGHT, border: `1px solid ${ROSE_MID}`,
+      color: ROSE, fontSize: 12, fontWeight: 500,
+      padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
+      fontFamily: 'inherit', whiteSpace: 'nowrap',
+    }}>{s}</button>
+  ))}
+</div>
             {/* Products list */}
             {savedProducts.length === 0 ? (
               <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16, padding: '40px 24px', textAlign: 'center' }}>

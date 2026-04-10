@@ -19,7 +19,7 @@ interface DashboardProps {
   onEditProfile: () => void;
   onResetAll: () => void;
   onRoutineUpdate: (r: RoutineProduct[]) => void;
-  onOpenMySpace: () => void;
+  onOpenMySpace: (tab?: 'profile' | 'routine' | 'saved') => void;
   onRegisterScrollToRoutine?: (fn: () => void) => void;
 }
 
@@ -214,101 +214,82 @@ export default function Dashboard({
           </div>
         </div>
 
-        {/* ── My Space summary card ── */}
-        <div onClick={onOpenMySpace} style={{ ...cardBase, padding: '18px', marginBottom: 20 }}
-          onMouseEnter={onCardEnter} onMouseLeave={onCardLeave}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#94a3b8' }}>My Space</div>
-            <span style={{ fontSize: 12, color: TEAL, fontWeight: 600 }}>View all →</span>
-          </div>
+ {/* ── My Space summary ── */}
+<div style={{ marginBottom: 20 }}>
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#94a3b8' }}>My Space</div>
+    <span onClick={() => onOpenMySpace('profile')} style={{ fontSize: 12, color: TEAL, fontWeight: 600, cursor: 'pointer' }}>View all →</span>
+  </div>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+    {/* Profile */}
+    <div onClick={() => onOpenMySpace('profile')} style={{ ...cardBase, padding: '14px', display: 'flex', flexDirection: 'column', gap: 6 }}
+      onMouseEnter={onCardEnter} onMouseLeave={onCardLeave}>
+      <div style={{ width: 28, height: 28, borderRadius: 8, background: TEAL_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <IconUser size={14} color={TEAL} />
+      </div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>Profile</div>
+      <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.3 }}>
+        {profile.completed ? (Array.isArray(profile.skinType) ? profile.skinType[0] : profile.skinType) + ' skin' : 'Not set up'}
+      </div>
+    </div>
+    {/* Routine */}
+    <div onClick={() => onOpenMySpace('routine')} style={{ ...cardBase, padding: '14px', display: 'flex', flexDirection: 'column', gap: 6 }}
+      onMouseEnter={onCardEnter} onMouseLeave={onCardLeave}>
+      <div style={{ width: 28, height: 28, borderRadius: 8, background: TEAL_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <IconList size={14} color={TEAL} />
+      </div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>Routine</div>
+      <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.3 }}>
+        {routine.length > 0 ? `${amRoutine.length} AM · ${pmRoutine.length} PM` : 'No products yet'}
+      </div>
+    </div>
+    {/* Saved */}
+    <div onClick={() => onOpenMySpace('saved')} style={{ ...cardBase, padding: '14px', display: 'flex', flexDirection: 'column', gap: 6 }}
+      onMouseEnter={onCardEnter} onMouseLeave={onCardLeave}>
+      <div style={{ width: 28, height: 28, borderRadius: 8, background: TEAL_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <IconBookmark size={14} color={TEAL} />
+      </div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>Saved</div>
+      <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.3 }}>Find best prices</div>
+    </div>
+  </div>
+</div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-            {/* Profile */}
-            <div style={{ background: '#f8fafc', borderRadius: 12, padding: '12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: TEAL_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <IconUser size={14} color={TEAL} />
-              </div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>Profile</div>
-              <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.3 }}>
-                {profile.completed
-                  ? (Array.isArray(profile.skinType) ? profile.skinType[0] : profile.skinType) + ' skin'
-                  : 'Not set up'}
-              </div>
-            </div>
+{/* ── Tools ── */}
+<div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#94a3b8', marginBottom: 10 }}>
+  Tools
+</div>
 
-            {/* Routine */}
-            <div style={{ background: '#f8fafc', borderRadius: 12, padding: '12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: TEAL_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <IconList size={14} color={TEAL} />
-              </div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>Routine</div>
-              <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.3 }}>
-                {routine.length > 0
-                  ? `${amRoutine.length} AM · ${pmRoutine.length} PM`
-                  : 'No products yet'}
-              </div>
-            </div>
+<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 20 }}>
+  <div onClick={onOpenIngredients} style={{ ...cardBase, padding: '14px', display: 'flex', flexDirection: 'column', gap: 6 }}
+    onMouseEnter={onCardEnter} onMouseLeave={onCardLeave}>
+    <div style={{ width: 28, height: 28, borderRadius: 8, background: TEAL_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <IconFlask size={14} />
+    </div>
+    <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>Ingredient Decoder</div>
+    <div style={{ fontSize: 11, color: '#94a3b8',  marginTop: 'auto' }}>Understand ingredients</div>
+  </div>
 
-            {/* Saved */}
-            <div style={{ background: '#f8fafc', borderRadius: 12, padding: '12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: TEAL_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <IconBookmark size={14} color={TEAL} />
-              </div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>Saved</div>
-              <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.3 }}>
-                Tap to find best prices
-              </div>
-            </div>
-          </div>
-        </div>
+  <div onClick={onOpenCheckProducts} style={{ ...cardBase, padding: '14px', display: 'flex', flexDirection: 'column', gap: 6 }}
+    onMouseEnter={onCardEnter} onMouseLeave={onCardLeave}>
+    <div style={{ width: 28, height: 28, borderRadius: 8, background: TEAL_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <IconShieldCheck size={14} />
+    </div>
+    <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>Check Products</div>
+    <div style={{ fontSize: 11, color:'#94a3b8', marginTop: 'auto' }}>Check compatibility</div>
+  </div>
 
-        {/* ── Tools ── */}
-        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#94a3b8', marginBottom: 10 }}>
-          Tools
-        </div>
-
-        {/* Hero: Ingredient Decoder */}
-        <div onClick={onOpenIngredients} style={{ ...cardBase, padding: '16px', marginBottom: 10 }}
-          onMouseEnter={onCardEnter} onMouseLeave={onCardLeave}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <IconBox><IconFlask size={18} /></IconBox>
-            <FreeBadge />
-          </div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 5 }}>Ingredient Decoder</div>
-          <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>
-            Photograph or paste any product label — get a plain-English breakdown of every ingredient and what it actually does for your skin.
-          </div>
-          <div style={{ fontSize: 12, color: TEAL, fontWeight: 600, marginTop: 10 }}>Open →</div>
-        </div>
-
-        {/* 2-col: Check Products + Reality Check */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
-          <div onClick={onOpenCheckProducts}
-            style={{ ...cardBase, padding: '14px', display: 'flex', flexDirection: 'column', gap: 8 }}
-            onMouseEnter={onCardEnter} onMouseLeave={onCardLeave}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <IconBox><IconShieldCheck size={16} /></IconBox>
-              <FreeBadge />
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>Check Products</div>
-            <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.4 }}>Find conflicts & layering order</div>
-            <div style={{ fontSize: 12, color: TEAL, fontWeight: 600, marginTop: 'auto' }}>Open →</div>
-          </div>
-
-          <div onClick={onOpenScamCheck}
-            style={{ ...cardBase, padding: '14px', display: 'flex', flexDirection: 'column', gap: 8 }}
-            onMouseEnter={onCardEnter} onMouseLeave={onCardLeave}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <IconBox><IconWarning size={16} /></IconBox>
-              <FreeBadge />
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>Reality Check</div>
-            <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.4 }}>Seen it on TikTok or Instagram? Find out if it&apos;s worth your money.</div>
-            <div style={{ fontSize: 12, color: TEAL, fontWeight: 600, marginTop: 'auto' }}>Open →</div>
-          </div>
+  <div onClick={onOpenScamCheck} style={{ ...cardBase, padding: '14px', display: 'flex', flexDirection: 'column', gap: 6 }}
+    onMouseEnter={onCardEnter} onMouseLeave={onCardLeave}>
+    <div style={{ width: 28, height: 28, borderRadius: 8, background: TEAL_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <IconWarning size={14} />
+    </div>
+    <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>Reality Check</div>
+    <div style={{ fontSize: 11, color:'#94a3b8', marginTop: 'auto' }}>Spot fake claims</div>
+  </div>
+</div>
         </div>
 
       </div>
-    </div>
   );
 }

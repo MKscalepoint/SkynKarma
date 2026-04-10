@@ -415,11 +415,14 @@ export default function Landing({ onStart, hasProfile, onResume }: LandingProps)
           .tools-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
-      <CookieBanner />
+    <CookieBanner />
       {/* Footer */}
-      <div style={{ padding: '24px 40px', textAlign: 'center', fontSize: 12, color: '#94a3b8', borderTop: '1px solid #f1f5f9' }}>
-        skynkarma provides general skincare guidance and is not a substitute for professional dermatological advice.<br /><br />
-        Got feedback? We&apos;d love to hear it — <a href="mailto:hello@skynkarma.com" style={{ color: ROSE, textDecoration: 'none' }}>hello@skynkarma.com</a>
+      <div style={{ padding: '24px 40px', textAlign: 'center', fontSize: 12, color: '#64748b', borderTop: '1px solid #f1f5f9' }}>
+        skynkarma provides general skincare guidance and is not a substitute for professional dermatological advice.{' '}
+        Got feedback?{' '}
+        <a href={FEEDBACK_FORM_URL} target="_blank" rel="noopener noreferrer" style={{ color: ROSE, fontWeight: 600, textDecoration: 'none' }}>Share your thoughts</a>
+        {' '}or email{' '}
+        <a href="mailto:hello@skynkarma.com" style={{ color: ROSE, fontWeight: 600, textDecoration: 'none' }}>hello@skynkarma.com</a>
       </div>
 
     </div>
