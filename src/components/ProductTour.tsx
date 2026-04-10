@@ -16,10 +16,10 @@ export default function ProductTour({ onOpenChat, onOpenIngredients }: ProductTo
     if (localStorage.getItem(TOUR_KEY)) return;
 
     const isMobile = window.innerWidth < 641;
-    const ids = isMobile
-      ? { chat: '#mob-tour-chat', tools: '#mob-tour-tools', saved: '#mob-tour-saved', profile: '#mob-tour-profile' }
-      : { chat: '#tour-chat', tools: '#tour-tools', saved: '#tour-saved', profile: '#tour-profile' };
-
+   const ids = isMobile
+  ? { chat: '#mob-tour-chat', myspace: '#mob-tour-myspace', tools: '#mob-tour-tools' }
+  : { chat: '#tour-chat', myspace: '#tour-myspace', tools: '#tour-tools' };
+  
     const driverObj = driver({
       showProgress: true,
       animate: true,
@@ -35,52 +35,43 @@ export default function ProductTour({ onOpenChat, onOpenIngredients }: ProductTo
         localStorage.setItem(TOUR_KEY, 'true');
         driverObj.destroy();
       },
-      steps: [
-        {
-          popover: {
-            title: '👋 Welcome to skynkarma!',
-            description: "We're your personal AI skincare advisor. Let us show you around — it'll take less than a minute.",
-            side: 'bottom',
-            align: 'center',
-          },
-        },
-        {
-          element: ids.profile,
-          popover: {
-            title: '✨ Set Up Your Skin Profile',
-            description: 'Tell us about your skin type and concerns — every piece of advice will be personalised to you. Takes 2 minutes.',
-            side: 'top',
-            align: 'center',
-          },
-        },
-        {
-          element: ids.chat,
-          popover: {
-            title: '💬 Your AI Skin Advisor',
-            description: 'Ask anything about skincare — ingredients, routines, products. Get honest, science-backed advice tailored to your skin.',
-            side: 'top',
-            align: 'center',
-          },
-        },
-        {
-          element: ids.tools,
-          popover: {
-            title: '🔬 Powerful Skincare Tools',
-            description: 'Three tools to help you make smarter decisions: decode ingredients, check product compatibility, and spot misleading claims.',
-            side: 'top',
-            align: 'center',
-          },
-        },
-        {
-          element: ids.saved,
-          popover: {
-            title: '🔖 Save & Find Best Prices',
-            description: 'Save products you love or want to try, then find the best price across major retailers with one tap.',
-            side: 'top',
-            align: 'center',
-          },
-        },
-      ],
+    steps: [
+  {
+    popover: {
+      title: '👋 Welcome to skynkarma!',
+      description: "We're your personal AI skincare advisor. Let us show you around — it'll take less than a minute.",
+      side: 'bottom',
+      align: 'center',
+    },
+  },
+  {
+    element: ids.chat,
+    popover: {
+      title: '💬 Your AI Skin Advisor',
+      description: 'Ask anything about skincare — ingredients, routines, products. Get honest, science-backed advice tailored to your skin.',
+      side: 'top',
+      align: 'center',
+    },
+  },
+  {
+    element: ids.myspace,
+    popover: {
+      title: '🌿 My Space',
+      description: 'Your personal hub — set up your skin profile, build your AM and PM routine, and save products to find the best prices.',
+      side: 'top',
+      align: 'center',
+    },
+  },
+  {
+    element: ids.tools,
+    popover: {
+      title: '🔬 Powerful Skincare Tools',
+      description: 'Three tools to help you make smarter decisions: decode ingredients, check product compatibility, and spot misleading claims.',
+      side: 'top',
+      align: 'center',
+    },
+  },
+],
     });
 
     setTimeout(() => driverObj.drive(), 1000);
