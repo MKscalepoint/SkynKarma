@@ -2,21 +2,21 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'SkynKarma — Your Personal Skincare Advisor',
+  title: 'skynkarma — Your Personal Skincare Advisor',
   description: 'AI-powered skincare intelligence. Decode ingredients, build your routine, and get personalised advice based on your skin type and concerns.',
   keywords: 'skincare, ingredients, skincare routine, AI skincare, ingredient checker, skin advisor, skincare advice',
   authors: [{ name: 'SkynKarma' }],
   openGraph: {
-    title: 'SkynKarma — Your Personal Skincare Advisor',
+    title: 'skynkarma — Your Personal Skincare Advisor',
     description: 'Decode ingredients, build your routine, and get personalised skincare advice — tailored to your skin.',
     url: 'https://skynkarma.com',
-    siteName: 'SkynKarma',
+    siteName: 'skynkarma',
     type: 'website',
     locale: 'en_GB',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SkynKarma — Your Personal Skincare Advisor',
+    title: 'skynkarma — Your Personal Skincare Advisor',
     description: 'Decode ingredients, build your routine, and get personalised skincare advice — tailored to your skin.',
   },
   robots: {

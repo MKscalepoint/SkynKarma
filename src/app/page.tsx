@@ -144,14 +144,17 @@ export default function App() {
     setView('landing');
     setHydrated(true);
 
-    const openTool = sessionStorage.getItem('skynkarma_open_tool');
-    if (openTool) {
-      sessionStorage.removeItem('skynkarma_open_tool');
-      if (openTool === 'ingredients') {
-        setShowIngredients(true);
-        setView('dashboard');
-      }
-    }
+    // Replace your existing openTool block with this:
+const openTool = sessionStorage.getItem('skynkarma_open_tool') 
+  || new URLSearchParams(window.location.search).get('tool');
+
+if (openTool) {
+  sessionStorage.removeItem('skynkarma_open_tool');
+  setView('dashboard');
+  if (openTool === 'ingredients') setShowIngredients(true);
+  else if (openTool === 'check-products') setShowCheckProducts(true);
+  else if (openTool === 'reality-check') setShowScamCheck(true);
+}
   }, []);
 
   useEffect(() => {
